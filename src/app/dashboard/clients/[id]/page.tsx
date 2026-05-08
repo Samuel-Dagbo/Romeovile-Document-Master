@@ -97,10 +97,12 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
       const res = await fetch(`${API_URL}/rest/v1/plots?client_id=eq.${params.id}&select=*,locations(name)`, {
         headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
       });
+      if (!res.ok) throw new Error('Failed to fetch plots');
       const data = await res.json();
-      setPlots(data || []);
+      setPlots(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching plots:', error);
+      setPlots([]);
     }
   };
 
@@ -109,6 +111,7 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
       const res = await fetch(`${API_URL}/rest/v1/indentures?client_id=eq.${params.id}&select=*`, {
         headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
       });
+      if (!res.ok) throw new Error('Failed to fetch indenture');
       const data = await res.json();
       if (data && data.length > 0) {
         setIndentureData(data[0]);
@@ -250,8 +253,8 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
         {[
           { label: "Total Amount", value: `₵${clientData.total_amount.toLocaleString()}`, icon: DollarSign, color: "blue" },
           { label: "Balance Due", value: `₵${clientData.balance.toLocaleString()}`, icon: CreditCard, color: "amber" },
-          { label: "Plots", value: plots.length.toString(), icon: Building2, color: "purple" },
-          { label: "Indentures", value: indentureData.number_of_indentures.toString(), icon: ScrollText, color: "emerald" },
+          { label: "Plots", value: plots?.length ? plots.length.toString() : "0", icon: Building2, color: "purple" },
+          { label: "Indentures", value: indentureData?.number_of_indentures ? indentureData.number_of_indentures.toString() : "0", icon: ScrollText, color: "emerald" },
         ].map((stat) => (
           <div key={stat.label} className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
             <div className="flex items-center gap-3 mb-2">
