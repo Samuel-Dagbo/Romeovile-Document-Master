@@ -143,14 +143,12 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
     try {
       const res = await fetch(`${API_URL}/rest/v1/clients?id=eq.${params.id}`, {
         method: 'PATCH',
-        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
+        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
         body: JSON.stringify({
           full_name: editData.full_name,
           phone: editData.phone,
           email: editData.email,
           address: editData.address,
-          total_amount: editData.total_amount,
-          balance: editData.balance,
           plot_number: sitePlanData.plot_number,
           plot_size: sitePlanData.plot_size ? parseFloat(sitePlanData.plot_size) : null,
           plot_location: sitePlanData.plot_location,
@@ -158,14 +156,18 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
           site_plan_signed: sitePlanData.site_plan_signed,
           number_of_indentures: indentureData.number_of_indentures,
           indenture_done: indentureData.indenture_done,
-          indenture_date: indentureData.indenture_date,
+          indenture_date: indentureData.indenture_date || null,
           indenture_signed: indentureData.indenture_signed,
           deponent_signed: indentureData.deponent_signed,
           boss_signed: indentureData.boss_signed,
           court_signed: indentureData.court_signed
         })
       });
-      if (!res.ok) throw new Error('Failed to save');
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Save error:', res.status, errorText);
+        throw new Error(`Failed to save: ${res.status}`);
+      }
       setIsEditing(false);
       toast.success("Client information updated successfully!");
       fetchClient();
@@ -179,7 +181,7 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
     try {
       const res = await fetch(`${API_URL}/rest/v1/clients?id=eq.${params.id}`, {
         method: 'PATCH',
-        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
+        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
         body: JSON.stringify({
           plot_number: sitePlanData.plot_number,
           plot_size: sitePlanData.plot_size ? parseFloat(sitePlanData.plot_size) : null,
@@ -188,7 +190,11 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
           site_plan_signed: sitePlanData.site_plan_signed
         })
       });
-      if (!res.ok) throw new Error('Failed to save');
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Save error:', res.status, errorText);
+        throw new Error(`Failed to save: ${res.status}`);
+      }
       toast.success("Site plan info saved!");
       fetchClient();
     } catch (error) {
@@ -201,18 +207,22 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
     try {
       const res = await fetch(`${API_URL}/rest/v1/clients?id=eq.${params.id}`, {
         method: 'PATCH',
-        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
+        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
         body: JSON.stringify({
           number_of_indentures: indentureData.number_of_indentures,
           indenture_done: indentureData.indenture_done,
-          indenture_date: indentureData.indenture_date,
+          indenture_date: indentureData.indenture_date || null,
           indenture_signed: indentureData.indenture_signed,
           deponent_signed: indentureData.deponent_signed,
           boss_signed: indentureData.boss_signed,
           court_signed: indentureData.court_signed
         })
       });
-      if (!res.ok) throw new Error('Failed to save');
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Save error:', res.status, errorText);
+        throw new Error(`Failed to save: ${res.status}`);
+      }
       toast.success("Indenture info saved!");
       fetchClient();
     } catch (error) {
