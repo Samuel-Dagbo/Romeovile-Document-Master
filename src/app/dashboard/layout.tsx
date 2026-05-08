@@ -37,7 +37,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const handleLogout = () => {
     logout();
     toast.success("Logged out");
-    router.push("/auth/login");
+    router.push("/");
   };
 
   return (
