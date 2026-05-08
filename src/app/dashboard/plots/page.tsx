@@ -1,47 +1,71 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Search,
   MapPin,
-  CheckCircle,
-  XCircle,
   Building2,
+  User,
+  FileText,
 } from "lucide-react";
 
-const demoPlots = [
-  { id: "1", plot_number: "PL-001", acreage: 2.5, status: "sold", location: "Obuasi Municipal", client: "Kwame Asante", plot_picked: true, site_plan_done: true },
-  { id: "2", plot_number: "PL-002", acreage: 1.8, status: "sold", location: "Obuasi Municipal", client: "Akosua Mensah", plot_picked: true, site_plan_done: false },
-  { id: "3", plot_number: "PL-003", acreage: 3.0, status: "sold", location: "Obuasi East", client: "Yaw Boateng", plot_picked: false, site_plan_done: false },
-  { id: "4", plot_number: "PL-004", acreage: 1.5, status: "sold", location: "Obuasi West", client: "Abena Kwarteng", plot_picked: true, site_plan_done: true },
-  { id: "5", plot_number: "PL-005", acreage: 2.2, status: "available", location: "Bogoso", client: null, plot_picked: false, site_plan_done: false },
-  { id: "6", plot_number: "PL-006", acreage: 1.0, status: "reserved", location: "Anglo", client: "Kofi Osei", plot_picked: true, site_plan_done: false },
-];
+interface Client {
+  id: string;
+  full_name: string;
+  file_number: string;
+  plot_number: string;
+  plot_size: number;
+  status: string;
+}
+
+const API_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const API_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 export default function PlotsPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredPlots = demoPlots.filter((plot) => {
-    return plot.plot_number.toLowerCase().includes(searchQuery.toLowerCase()) || 
-           plot.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           (plot.client && plot.client.toLowerCase().includes(searchQuery.toLowerCase()));
+  useEffect(() => {
+    fetchClients();
+  }, []);
+
+  const fetchClients = async () => {
+    try {
+      const res = await fetch(`${API_URL}/rest/v1/clients?select=id,full_name,file_number,plot_number,plot_size,status&plot_number=not.is.null`, {
+        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
+      });
+      const data = await res.json();
+      setClients(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+      setClients([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredClients = clients.filter((client) => {
+    const search = searchQuery.toLowerCase();
+    return client.full_name?.toLowerCase().includes(search) ||
+           client.file_number?.toLowerCase().includes(search) ||
+           client.plot_number?.toLowerCase().includes(search);
   });
 
   const stats = [
-    { label: "Total Plots", value: demoPlots.length, color: "text-blue-600" },
-    { label: "Sold", value: demoPlots.filter((p) => p.status === "sold").length, color: "text-emerald-600" },
-    { label: "Available", value: demoPlots.filter((p) => p.status === "available").length, color: "text-amber-600" },
-    { label: "Reserved", value: demoPlots.filter((p) => p.status === "reserved").length, color: "text-purple-600" },
+    { label: "Total Clients", value: clients.length, color: "text-blue-600" },
+    { label: "With Plots", value: clients.filter((c) => c.plot_number).length, color: "text-emerald-600" },
+    { label: "No Plots", value: clients.filter((c) => !c.plot_number).length, color: "text-amber-600" },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Plots</h1>
-          <p className="text-muted-foreground mt-1">View all allocated plots</p>
+          <h1 className="text-2xl font-bold">Client Plots</h1>
+          <p className="text-muted-foreground mt-1">View plot assignments per client</p>
         </div>
       </div>
 
@@ -67,59 +91,55 @@ export default function PlotsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredPlots.map((plot, index) => (
-          <motion.div
-            key={plot.id}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: index * 0.05 }}
-            className="card-premium p-5 hover:shadow-lg transition-shadow"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-semibold">{plot.plot_number}</h3>
-                <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                  <MapPin className="w-3.5 h-3.5" /> {plot.location}
-                </p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {loading ? (
+          <p className="text-muted-foreground">Loading...</p>
+        ) : filteredClients.length === 0 ? (
+          <p className="text-muted-foreground col-span-3">No clients with plots found</p>
+        ) : (
+          filteredClients.map((client, index) => (
+            <motion.div
+              key={client.id}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.05 }}
+              className="card-premium p-5 hover:shadow-lg transition-shadow"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
+                    <User className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">{client.full_name}</h3>
+                    <p className="text-xs text-muted-foreground">{client.file_number}</p>
+                  </div>
+                </div>
               </div>
-              <span
-                className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                  plot.status === "sold"
-                    ? "bg-emerald-50 text-emerald-600"
-                    : plot.status === "available"
-                    ? "bg-amber-50 text-amber-600"
-                    : "bg-purple-50 text-purple-600"
-                }`}
-              >
-                {plot.status.charAt(0).toUpperCase() + plot.status.slice(1)}
-              </span>
-            </div>
 
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Acreage</span>
-                <span className="font-medium">{plot.acreage} acres</span>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <Building2 className="w-3.5 h-3.5" /> Plot No
+                  </span>
+                  <span className="font-medium">{client.plot_number || "—"}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5" /> Plot Size
+                  </span>
+                  <span className="font-medium">{client.plot_size ? `${client.plot_size} acres` : "—"}</span>
+                </div>
+                <Link 
+                  href={`/dashboard/clients/${client.id}`}
+                  className="flex items-center justify-center gap-1 text-xs text-blue-600 hover:underline mt-2 pt-2 border-t"
+                >
+                  <FileText className="w-3.5 h-3.5" /> View Full Profile
+                </Link>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Client</span>
-                <span className="font-medium">{plot.client || "—"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Plot Picked</span>
-                <span className={plot.plot_picked ? "text-emerald-600" : "text-amber-600"}>
-                  {plot.plot_picked ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Site Plan</span>
-                <span className={plot.site_plan_done ? "text-emerald-600" : "text-amber-600"}>
-                  {plot.site_plan_done ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                </span>
-              </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          ))
+        )}
       </div>
     </div>
   );
