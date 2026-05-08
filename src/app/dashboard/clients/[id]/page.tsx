@@ -91,13 +91,20 @@ export default function ClientProfilePage({ params }: { params: Promise<{ id: st
 
   useEffect(() => {
     fetchClient();
-    setLoading(false);
   }, [resolvedParams.id]);
 
   const fetchClient = async () => {
+    setLoading(true);
     try {
       const res = await fetch(`/api/clients?id=${resolvedParams.id}`);
       const data = await res.json();
+      
+      if (!res.ok || data.error) {
+        console.error('API error:', data.error);
+        setLoading(false);
+        return;
+      }
+      
       if (data && data.length > 0) {
         const client = data[0];
         setSitePlanData({
@@ -116,10 +123,12 @@ export default function ClientProfilePage({ params }: { params: Promise<{ id: st
           boss_signed: client.boss_signed || false,
           court_signed: client.court_signed || false
         });
-        setEditData(prev => ({ ...prev, ...client }));
+        setEditData({ ...clientData, ...client });
       }
     } catch (error) {
       console.error('Error fetching client:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -317,15 +326,21 @@ export default function ClientProfilePage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
-      <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        {activeTab === "overview" && <OverviewTab indenture={indentureData} clientData={editData} />}
-        {activeTab === "siteplan" && <SitePlanTab sitePlanData={sitePlanData} setSitePlanData={setSitePlanData} isEditing={isEditing} clientId={resolvedParams.id} onSave={handleSitePlanSave} />}
-        {activeTab === "indenture" && <IndentureTab data={indentureData} isEditing={isEditing} setData={setIndentureData} onSave={handleIndentureSave} />}
-        {activeTab === "plots" && <PlotsTab sitePlanData={sitePlanData} indentureData={indentureData} clientData={editData} />}
-        {activeTab === "documents" && <DocumentsTab documents={documents} />}
-        {activeTab === "payments" && <PaymentsTab payments={payments} />}
-        {activeTab === "activity" && <ActivityTab activities={activities} />}
-      </motion.div>
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : (
+        <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          {activeTab === "overview" && <OverviewTab indenture={indentureData} clientData={editData} />}
+          {activeTab === "siteplan" && <SitePlanTab sitePlanData={sitePlanData} setSitePlanData={setSitePlanData} isEditing={isEditing} clientId={resolvedParams.id} onSave={handleSitePlanSave} />}
+          {activeTab === "indenture" && <IndentureTab data={indentureData} isEditing={isEditing} setData={setIndentureData} onSave={handleIndentureSave} />}
+          {activeTab === "plots" && <PlotsTab sitePlanData={sitePlanData} indentureData={indentureData} clientData={editData} />}
+          {activeTab === "documents" && <DocumentsTab documents={documents} />}
+          {activeTab === "payments" && <PaymentsTab payments={payments} />}
+          {activeTab === "activity" && <ActivityTab activities={activities} />}
+        </motion.div>
+      )}
     </div>
   );
 }
