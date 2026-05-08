@@ -327,7 +327,7 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
         {activeTab === "overview" && <OverviewTab indenture={indentureData} />}
         {activeTab === "siteplan" && <SitePlanTab sitePlanData={sitePlanData} setSitePlanData={setSitePlanData} isEditing={isEditing} clientId={params.id} />}
         {activeTab === "indenture" && <IndentureTab data={indentureData} isEditing={isEditing} setData={setIndentureData} onSave={handleIndentureSave} />}
-        {activeTab === "plots" && <PlotsTab plots={plots} />}
+        {activeTab === "plots" && <PlotsTab />}
         {activeTab === "documents" && <DocumentsTab documents={documents} />}
         {activeTab === "payments" && <PaymentsTab payments={payments} />}
         {activeTab === "activity" && <ActivityTab activities={activities} />}
@@ -600,39 +600,19 @@ function IndentureTab({ data, isEditing, setData, onSave }: { data: any; isEditi
   );
 }
 
-function PlotsTab({ plots }: { plots: any[] }) {
+function PlotsTab({ }: { }) {
   return (
-    <div className="space-y-4">
-      {plots.map((plot) => (
-        <div key={plot.id} className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 hover:border-slate-300 transition-colors">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/20 rounded-xl flex items-center justify-center">
-                <Map className="w-6 h-6 text-purple-600" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-slate-900 dark:text-white">Plot {plot.plot_number}</h4>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{plot.location} • {plot.acreage} acres</p>
-              </div>
-            </div>
-            <span className="px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 text-xs font-medium">Sold</span>
-          </div>
-          <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-            <div className="flex items-center gap-2">
-              {plot.picked ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Clock className="w-4 h-4 text-amber-500" />}
-              <span className="text-sm text-slate-600">Plot Picked</span>
-            </div>
-            <div className="flex items-center gap-2">
-              {plot.sitePlan ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Clock className="w-4 h-4 text-amber-500" />}
-              <span className="text-sm text-slate-600">Site Plan</span>
-            </div>
-          </div>
+    <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/20 rounded-xl flex items-center justify-center">
+          <Map className="w-6 h-6 text-purple-600" />
         </div>
-      ))}
-      <button className="w-full py-3 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl text-slate-500 hover:border-blue-400 hover:text-blue-500 transition-colors flex items-center justify-center gap-2">
-        <Plus className="w-4 h-4" />
-        Add New Plot
-      </button>
+        <div>
+          <h4 className="font-semibold text-slate-900 dark:text-white">Plot Information</h4>
+          <p className="text-sm text-slate-500 dark:text-slate-400">This client's assigned plot</p>
+        </div>
+      </div>
+      <p className="text-center text-slate-400 py-8">Plot details are shown in the Site Plan tab</p>
     </div>
   );
 }
