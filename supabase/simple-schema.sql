@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS plots (
   status TEXT DEFAULT 'available',
   plot_picked BOOLEAN DEFAULT false,
   site_plan_done BOOLEAN DEFAULT false,
+  site_plan_signed BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

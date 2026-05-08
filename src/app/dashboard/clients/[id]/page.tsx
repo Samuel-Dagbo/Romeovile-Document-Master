@@ -368,11 +368,47 @@ function OverviewTab({ indenture }: { indenture: typeof defaultIndenture }) {
 }
 
 function SitePlanTab({ plots, isEditing, setPlots, clientId }: { plots: Plot[]; isEditing: boolean; setPlots: any; clientId: string }) {
+  const API_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const API_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  const [addingPlot, setAddingPlot] = useState(false);
+  const [newPlot, setNewPlot] = useState({
+    plot_number: '',
+    acreage: '',
+    site_plan_done: false,
+    site_plan_signed: false,
+    locality_id: ''
+  });
+
+  const handleAddPlot = async () => {
+    try {
+      const res = await fetch(`${API_URL}/rest/v1/plots`, {
+        method: 'POST',
+        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify({
+          client_id: clientId,
+          plot_number: newPlot.plot_number || `PL-${Date.now().toString().slice(-4)}`,
+          acreage: newPlot.acreage ? parseFloat(newPlot.acreage.toString()) : null,
+          site_plan_done: newPlot.site_plan_done,
+          site_plan_signed: newPlot.site_plan_signed,
+          status: 'sold',
+          plot_picked: true
+        })
+      });
+      if (res.ok) {
+        setAddingPlot(false);
+        setNewPlot({ plot_number: '', acreage: '', site_plan_done: false, site_plan_signed: false, locality_id: '' });
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error('Error adding plot:', error);
+    }
+  };
+
   const handlePlotChange = async (plotId: string, field: string, value: any) => {
     const updatedPlots = plots.map(p => p.id === plotId ? { ...p, [field]: value } : p);
     setPlots(updatedPlots);
 
-    if (isEditing) {
+    if (isEditing && plotId !== 'new') {
       try {
         await fetch(`${API_URL}/rest/v1/plots?id=eq.${plotId}`, {
           method: 'PATCH',
@@ -390,12 +426,77 @@ function SitePlanTab({ plots, isEditing, setPlots, clientId }: { plots: Plot[]; 
       <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold">Site Plan Information</h3>
+          {!addingPlot && isEditing && (
+            <button onClick={() => setAddingPlot(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium flex items-center gap-2">
+              <Plus className="w-4 h-4" />Add Plot
+            </button>
+          )}
         </div>
 
-        {plots.length === 0 ? (
+        {addingPlot && (
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl mb-4">
+            <h4 className="font-semibold mb-4">New Plot</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Site Plan</p>
+                <select
+                  value={newPlot.site_plan_done ? "true" : "false"}
+                  onChange={(e) => setNewPlot({ ...newPlot, site_plan_done: e.target.value === "true" })}
+                  className="w-full px-3 py-2 rounded-lg border text-sm"
+                >
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Plot No</p>
+                <input
+                  type="text"
+                  value={newPlot.plot_number}
+                  onChange={(e) => setNewPlot({ ...newPlot, plot_number: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border text-sm"
+                  placeholder="PL-001"
+                />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Plot Size (acres)</p>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={newPlot.acreage}
+                  onChange={(e) => setNewPlot({ ...newPlot, acreage: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border text-sm"
+                  placeholder="2.5"
+                />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Site Plan Signed</p>
+                <select
+                  value={newPlot.site_plan_signed ? "true" : "false"}
+                  onChange={(e) => setNewPlot({ ...newPlot, site_plan_signed: e.target.value === "true" })}
+                  className="w-full px-3 py-2 rounded-lg border text-sm"
+                >
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <button onClick={handleAddPlot} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium">Save Plot</button>
+              <button onClick={() => setAddingPlot(false)} className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium">Cancel</button>
+            </div>
+          </div>
+        )}
+
+        {(plots.length === 0 && !addingPlot) ? (
           <div className="text-center py-8">
             <Map className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500">No plots assigned yet</p>
+            <p className="text-slate-500 mb-4">No plots assigned yet</p>
+            {isEditing && (
+              <button onClick={() => setAddingPlot(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium flex items-center gap-2 mx-auto">
+                <Plus className="w-4 h-4" />Add Plot
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
