@@ -1,90 +1,74 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import {
   ArrowRight,
-  BarChart3,
-  Shield,
-  Zap,
-  Globe,
   Users,
+  Map,
+  FileText,
   CheckCircle2,
-  Star,
   Menu,
   X,
   Moon,
   Sun,
+  Building2,
+  DollarSign,
+  TrendingUp,
+  Shield,
+  Zap,
+  Globe,
 } from "lucide-react";
-import { useState } from "react";
 import { useTheme } from "next-themes";
 
-const features = [
-  {
-    icon: Users,
-    title: "Client Management",
-    description: "Comprehensive client profiles with documents, payments, and activity tracking.",
-    color: "from-blue-500 to-blue-600",
-  },
-  {
-    icon: Globe,
-    title: "Plot & Land Tracking",
-    description: "Manage land allocations, indentures, and site plans in one place.",
-    color: "from-emerald-500 to-emerald-600",
-  },
-  {
-    icon: BarChart3,
-    title: "Real-time Analytics",
-    description: "Beautiful dashboards with revenue tracking and growth insights.",
-    color: "from-purple-500 to-purple-600",
-  },
-  {
-    icon: Shield,
-    title: "Enterprise Security",
-    description: "Role-based access control with admin approval workflows.",
-    color: "from-amber-500 to-amber-600",
-  },
-  {
-    icon: Zap,
-    title: "Automated Workflows",
-    description: "Auto-generated file numbers and streamlined document uploads.",
-    color: "from-rose-500 to-rose-600",
-  },
-  {
-    icon: CheckCircle2,
-    title: "Compliance Ready",
-    description: "Built for land administration compliance and audit trails.",
-    color: "from-cyan-500 to-cyan-600",
-  },
-];
-
-const testimonials = [
-  {
-    name: "Sarah Johnson",
-    role: "Operations Manager",
-    company: "LandMark Properties",
-    content: "RomeoVille transformed how we manage client data. The file number automation alone saves us hours daily.",
-    rating: 5,
-  },
-  {
-    name: "Kwame Asante",
-    role: "Director",
-    company: "Omega Estates",
-    content: "The analytics dashboard gives us insights we never had before. Best enterprise land management platform.",
-    rating: 5,
-  },
-  {
-    name: "Abena Kwarteng",
-    role: "Administrator",
-    company: "Royal Lands",
-    content: "From approvals to document uploads, everything works seamlessly. Highly recommended for any real estate company.",
-    rating: 5,
-  },
-];
+const API_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const API_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 export default function HomePage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  const [stats, setStats] = useState({
+    totalClients: 0,
+    activeClients: 0,
+    totalPlots: 0,
+    totalLocations: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const [clientsRes, locationsRes] = await Promise.all([
+        fetch(`${API_URL}/rest/v1/clients?select=id,status,plot_number`, {
+          headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
+        }),
+        fetch(`${API_URL}/rest/v1/locations?select=id`, {
+          headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
+        })
+      ]);
+      
+      const clients = await clientsRes.json();
+      const locations = await locationsRes.json();
+      
+      const clientList = Array.isArray(clients) ? clients : [];
+      const locationList = Array.isArray(locations) ? locations : [];
+      
+      setStats({
+        totalClients: clientList.length,
+        activeClients: clientList.filter((c: any) => c.status === 'active').length,
+        totalPlots: clientList.filter((c: any) => c.plot_number).length,
+        totalLocations: locationList.length
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-900">
@@ -101,14 +85,14 @@ export default function HomePage() {
 
             <div className="hidden md:flex items-center gap-8">
               <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</Link>
-              <Link href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Testimonials</Link>
-              <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Login</Link>
+              <Link href="#stats" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Statistics</Link>
               <button
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
+              <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Login</Link>
               <Link
                 href="/auth/signup"
                 className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-xl hover:shadow-lg transition-all"
@@ -134,7 +118,7 @@ export default function HomePage() {
             className="md:hidden bg-white dark:bg-slate-900 border-b dark:border-slate-700 px-4 py-4 space-y-3"
           >
             <Link href="#features" className="block text-sm font-medium">Features</Link>
-            <Link href="#testimonials" className="block text-sm font-medium">Testimonials</Link>
+            <Link href="#stats" className="block text-sm font-medium">Statistics</Link>
             <Link href="/auth/login" className="block text-sm font-medium">Login</Link>
             <Link href="/auth/signup" className="block text-sm font-medium text-blue-600">Get Started</Link>
           </motion.div>
@@ -142,7 +126,7 @@ export default function HomePage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <section className="pt-32 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -151,22 +135,22 @@ export default function HomePage() {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-sm font-medium mb-6">
               <Zap className="w-4 h-4" />
-              Enterprise Land Management Reimagined
+              Enterprise Land Management System
             </div>
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6 leading-tight">
-              Manage your land
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6 leading-tight">
+              Streamline your land
               <br />
-              <span className="text-gradient">with confidence</span>
+              <span className="text-gradient">management operations</span>
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
-              RomeoVille Document Master is the premium enterprise platform for client, plot, and document management. Built for modern real estate operations.
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
+              The comprehensive platform for managing clients, plots, indentures, and documents. Built for modern real estate operations in Ghana.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/auth/signup"
                 className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-2xl hover:shadow-xl hover:shadow-blue-500/25 transition-all inline-flex items-center gap-2"
               >
-                Get Started
+                Get Started Free
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <Link
@@ -177,95 +161,77 @@ export default function HomePage() {
               </Link>
             </div>
           </motion.div>
-
-          {/* Dashboard Preview */}
-          <motion.div
-            initial={{ opacity: 0, y: 60 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="mt-16 relative"
-          >
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-blue-500/10 border border-slate-200 dark:border-slate-700">
-              <div className="bg-gradient-to-br from-slate-900 to-slate-800 aspect-[16/9] flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <BarChart3 className="w-8 h-8 text-white" />
-                  </div>
-                  <p className="text-white/60">Analytics Dashboard Preview</p>
-                </div>
-              </div>
-            </div>
-            {/* Glow effect */}
-            <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-indigo-500/20 blur-3xl -z-10" />
-          </motion.div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-slate-800/50">
+      {/* Live Stats Section */}
+      <section id="stats" className="py-16 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-slate-800/50">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Everything you need</h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Complete toolkit for enterprise land and client management
-            </p>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Live System Statistics</h2>
+            <p className="text-muted-foreground text-lg">Real-time data from our platform</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, index) => (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { label: "Total Clients", value: stats.totalClients, icon: Users, color: "from-blue-500 to-blue-600", bg: "bg-blue-50 dark:bg-blue-900/20" },
+              { label: "Active Clients", value: stats.activeClients, icon: CheckCircle2, color: "from-emerald-500 to-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+              { label: "Plots Assigned", value: stats.totalPlots, icon: Map, color: "from-purple-500 to-purple-600", bg: "bg-purple-50 dark:bg-purple-900/20" },
+              { label: "Locations", value: stats.totalLocations, icon: Building2, color: "from-amber-500 to-amber-600", bg: "bg-amber-50 dark:bg-amber-900/20" },
+            ].map((stat, index) => (
               <motion.div
-                key={feature.title}
+                key={stat.label}
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                viewport={{ once: true }}
+                className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-lg border border-slate-100 dark:border-slate-800"
               >
-                <div className="card-premium p-6 h-full">
-                  <div className={`w-12 h-12 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center mb-4`}>
-                    <feature.icon className="w-6 h-6 text-white" />
+                <div className="flex items-center gap-4 mb-4">
+                  <div className={`w-12 h-12 ${stat.bg} rounded-xl flex items-center justify-center`}>
+                    <stat.icon className={`w-6 h-6 bg-gradient-to-br ${stat.color} rounded-lg text-white`} />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
                 </div>
+                <p className="text-3xl font-bold mb-1">
+                  {loading ? '-' : stat.value.toLocaleString()}
+                </p>
+                <p className="text-sm text-muted-foreground">{stat.label}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section id="testimonials" className="py-20 px-4 sm:px-6 lg:px-8">
+      {/* Features Section */}
+      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Trusted by professionals</h2>
-            <p className="text-muted-foreground text-lg">See what our users say about RomeoVille</p>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Powerful Features</h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Everything you need to manage your land business efficiently
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((testimonial, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              { icon: Users, title: "Client Management", desc: "Comprehensive client profiles with contact details, status tracking, and full history.", color: "blue" },
+              { icon: Map, title: "Plot Management", desc: "Track plot assignments, sizes, locations, and site plan statuses.", color: "purple" },
+              { icon: FileText, title: "Indenture Tracking", desc: "Monitor indenture progress, signatures, and legal documentation.", color: "emerald" },
+              { icon: DollarSign, title: "Payment Tracking", desc: "Monitor payments, outstanding balances, and payment history.", color: "amber" },
+              { icon: Building2, title: "Location Management", desc: "Organize plots by locations and municipalities.", color: "rose" },
+              { icon: Shield, title: "Role-Based Access", desc: "Secure system with admin approvals and user management.", color: "indigo" },
+            ].map((feature, index) => (
               <motion.div
-                key={testimonial.name}
+                key={feature.title}
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                viewport={{ once: true }}
               >
-                <div className="card-premium p-6 h-full">
-                  <div className="flex gap-1 mb-4">
-                    {Array.from({ length: testimonial.rating }).map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                    ))}
+                <div className="h-full bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg border border-slate-100 dark:border-slate-700 hover:shadow-xl transition-shadow">
+                  <div className={`w-12 h-12 bg-${feature.color}-50 dark:bg-${feature.color}-900/20 rounded-xl flex items-center justify-center mb-4`}>
+                    <feature.icon className={`w-6 h-6 text-${feature.color}-600`} />
                   </div>
-                  <p className="text-muted-foreground mb-6">"{testimonial.content}"</p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 rounded-full flex items-center justify-center font-medium">
-                      {testimonial.name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="font-medium">{testimonial.name}</p>
-                      <p className="text-sm text-muted-foreground">{testimonial.role}, {testimonial.company}</p>
-                    </div>
-                  </div>
+                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-muted-foreground">{feature.desc}</p>
                 </div>
               </motion.div>
             ))}
@@ -274,25 +240,24 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-slate-800/50">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="card-premium p-12 relative overflow-hidden"
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-12 relative overflow-hidden"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5" />
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/90 to-purple-600/90" />
             <div className="relative">
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                Ready to streamline your operations?
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+                Ready to modernize your operations?
               </h2>
-              <p className="text-muted-foreground text-lg mb-8 max-w-xl mx-auto">
-                Join hundreds of enterprises already using RomeoVille for their land management needs.
+              <p className="text-blue-100 text-lg mb-8 max-w-xl mx-auto">
+                Join real estate companies across Ghana who trust RomeoVille for their land management needs.
               </p>
               <Link
                 href="/auth/signup"
-                className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-2xl hover:shadow-xl transition-all"
+                className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 font-semibold rounded-2xl hover:shadow-xl transition-all"
               >
                 Get Started Today
                 <ArrowRight className="w-5 h-5" />
@@ -305,44 +270,20 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t dark:border-slate-700 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <Link href="/" className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold">R</span>
-                </div>
-                <span className="text-lg font-bold text-gradient">RomeoVille</span>
-              </Link>
-              <p className="text-sm text-muted-foreground">
-                Premium enterprise land and client management platform.
-              </p>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold">R</span>
+              </div>
+              <span className="text-lg font-bold">RomeoVille</span>
             </div>
-            <div>
-              <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="#features" className="hover:text-foreground transition-colors">Features</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">Pricing</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">Security</Link></li>
-              </ul>
+            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              <Link href="/auth/login" className="hover:text-foreground transition-colors">Login</Link>
+              <Link href="/auth/signup" className="hover:text-foreground transition-colors">Sign Up</Link>
             </div>
-            <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="#" className="hover:text-foreground transition-colors">About</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">Contact</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">Support</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="#" className="hover:text-foreground transition-colors">Privacy</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">Terms</Link></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t dark:border-slate-700 pt-8 text-center text-sm text-muted-foreground">
-            © 2026 RomeoVille Document Master. All rights reserved.
+            <p className="text-sm text-muted-foreground">
+              © 2026 RomeoVille Document Master. All rights reserved.
+            </p>
           </div>
         </div>
       </footer>
