@@ -78,29 +78,6 @@ export default function HomePage() {
         )}
       </nav>
 
-      {/* Stats Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">Trusted by Industry Leaders</h2>
-            <p className="text-blue-100">Join the leading land management platform in Ghana</p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {[
-              { number: "500+", label: "Clients Managed" },
-              { number: "50+", label: "Locations Covered" },
-              { number: "98%", label: "Satisfaction Rate" },
-              { number: "24/7", label: "Support Available" },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="text-3xl sm:text-4xl font-bold text-white">{stat.number}</p>
-                <p className="text-blue-100 text-sm mt-1">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Hero Section */}
       <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
@@ -137,6 +114,29 @@ export default function HomePage() {
               </Link>
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">Trusted by Industry Leaders</h2>
+            <p className="text-blue-100">Join the leading land management platform in Ghana</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { number: "500+", label: "Clients Managed" },
+              { number: "50+", label: "Locations Covered" },
+              { number: "98%", label: "Satisfaction Rate" },
+              { number: "24/7", label: "Support Available" },
+            ].map((stat) => (
+              <div key={stat.label} className="text-center">
+                <p className="text-3xl sm:text-4xl font-bold text-white">{stat.number}</p>
+                <p className="text-blue-100 text-sm mt-1">{stat.label}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
