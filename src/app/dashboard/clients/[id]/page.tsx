@@ -150,6 +150,7 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
           balance: editData.balance,
           plot_number: sitePlanData.plot_number,
           plot_size: sitePlanData.plot_size ? parseFloat(sitePlanData.plot_size) : null,
+          plot_location: sitePlanData.plot_location,
           site_plan_done: sitePlanData.site_plan_done,
           site_plan_signed: sitePlanData.site_plan_signed,
           number_of_indentures: indentureData.number_of_indentures,

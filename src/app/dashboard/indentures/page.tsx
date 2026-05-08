@@ -42,10 +42,12 @@ export default function IndenturesPage() {
 
   const fetchClients = async () => {
     try {
-      const res = await fetch(`${API_URL}/rest/v1/clients?select=id,full_name,file_number,plot_number,number_of_indentures,indenture_done,indenture_date,indenture_signed,boss_signed,court_signed`, {
+      // Get all clients - show all
+      const res = await fetch(`${API_URL}/rest/v1/clients?select=id,full_name,file_number,plot_number,plot_size,number_of_indentures,indenture_done,indenture_date,indenture_signed,boss_signed,court_signed`, {
         headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
       });
       const data = await res.json();
+      console.log('Clients data:', data);
       setClients(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching clients:', error);
