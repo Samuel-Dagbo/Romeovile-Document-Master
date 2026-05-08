@@ -42,6 +42,7 @@ const defaultIndenture = {
   indenture_done: false,
   indenture_date: "",
   indenture_signed: false,
+  deponent_signed: false,
   boss_signed: false,
   court_signed: false,
 };
@@ -117,6 +118,7 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
           indenture_done: client.indenture_done || false,
           indenture_date: client.indenture_date || '',
           indenture_signed: client.indenture_signed || false,
+          deponent_signed: client.deponent_signed || false,
           boss_signed: client.boss_signed || false,
           court_signed: client.court_signed || false
         });
@@ -139,7 +141,7 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
 
   const handleSave = async () => {
     try {
-      await fetch(`${API_URL}/rest/v1/clients?id=eq.${params.id}`, {
+      const res = await fetch(`${API_URL}/rest/v1/clients?id=eq.${params.id}`, {
         method: 'PATCH',
         headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -158,22 +160,65 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
           indenture_done: indentureData.indenture_done,
           indenture_date: indentureData.indenture_date,
           indenture_signed: indentureData.indenture_signed,
+          deponent_signed: indentureData.deponent_signed,
           boss_signed: indentureData.boss_signed,
           court_signed: indentureData.court_signed
         })
       });
+      if (!res.ok) throw new Error('Failed to save');
       setIsEditing(false);
       toast.success("Client information updated successfully!");
-      window.location.reload();
+      fetchClient();
     } catch (error) {
       console.error('Error saving:', error);
-      toast.error("Failed to save");
+      toast.error("Failed to save. Please try again.");
+    }
+  };
+
+  const handleSitePlanSave = async () => {
+    try {
+      const res = await fetch(`${API_URL}/rest/v1/clients?id=eq.${params.id}`, {
+        method: 'PATCH',
+        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plot_number: sitePlanData.plot_number,
+          plot_size: sitePlanData.plot_size ? parseFloat(sitePlanData.plot_size) : null,
+          plot_location: sitePlanData.plot_location,
+          site_plan_done: sitePlanData.site_plan_done,
+          site_plan_signed: sitePlanData.site_plan_signed
+        })
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      toast.success("Site plan info saved!");
+      fetchClient();
+    } catch (error) {
+      console.error('Error saving:', error);
+      toast.error("Failed to save site plan");
     }
   };
 
   const handleIndentureSave = async () => {
-    // Indenture data is now saved with the main handleSave function
-    toast.success("Indenture info saved!");
+    try {
+      const res = await fetch(`${API_URL}/rest/v1/clients?id=eq.${params.id}`, {
+        method: 'PATCH',
+        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          number_of_indentures: indentureData.number_of_indentures,
+          indenture_done: indentureData.indenture_done,
+          indenture_date: indentureData.indenture_date,
+          indenture_signed: indentureData.indenture_signed,
+          deponent_signed: indentureData.deponent_signed,
+          boss_signed: indentureData.boss_signed,
+          court_signed: indentureData.court_signed
+        })
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      toast.success("Indenture info saved!");
+      fetchClient();
+    } catch (error) {
+      console.error('Error saving:', error);
+      toast.error("Failed to save indenture");
+    }
   };
 
   return (
@@ -292,7 +337,7 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
 
       <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         {activeTab === "overview" && <OverviewTab indenture={indentureData} clientData={editData} />}
-        {activeTab === "siteplan" && <SitePlanTab sitePlanData={sitePlanData} setSitePlanData={setSitePlanData} isEditing={isEditing} clientId={params.id} />}
+        {activeTab === "siteplan" && <SitePlanTab sitePlanData={sitePlanData} setSitePlanData={setSitePlanData} isEditing={isEditing} clientId={params.id} onSave={handleSitePlanSave} />}
         {activeTab === "indenture" && <IndentureTab data={indentureData} isEditing={isEditing} setData={setIndentureData} onSave={handleIndentureSave} />}
         {activeTab === "plots" && <PlotsTab sitePlanData={sitePlanData} indentureData={indentureData} clientData={editData} />}
         {activeTab === "documents" && <DocumentsTab documents={documents} />}
@@ -386,10 +431,17 @@ function OverviewTab({ indenture, clientData }: { indenture: typeof defaultInden
   );
 }
 
-function SitePlanTab({ sitePlanData, setSitePlanData, isEditing, clientId }: { sitePlanData: any; setSitePlanData: any; isEditing: boolean; clientId: string }) {
+function SitePlanTab({ sitePlanData, setSitePlanData, isEditing, clientId, onSave }: { sitePlanData: any; setSitePlanData: any; isEditing: boolean; clientId: string; onSave: () => void }) {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
-      <h3 className="text-lg font-semibold mb-6">Site Plan Information</h3>
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-semibold">Site Plan Information</h3>
+        {isEditing && (
+          <button onClick={onSave} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-blue-700">
+            <Save className="w-4 h-4" /> Save
+          </button>
+        )}
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div>
