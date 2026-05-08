@@ -104,22 +104,23 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
       if (!res.ok) throw new Error('Failed to fetch client');
       const data = await res.json();
       if (data && data.length > 0) {
+        const client = data[0];
         setSitePlanData({
-          plot_number: data[0].plot_number || '',
-          plot_size: data[0].plot_size?.toString() || '',
-          site_plan_done: data[0].site_plan_done || false,
-          site_plan_signed: data[0].site_plan_signed || false,
-          plot_location: data[0].plot_location || ''
+          plot_number: client.plot_number || '',
+          plot_size: client.plot_size?.toString() || '',
+          site_plan_done: client.site_plan_done || false,
+          site_plan_signed: client.site_plan_signed || false,
+          plot_location: client.plot_location || ''
         });
         setIndentureData({
-          number_of_indentures: data[0].number_of_indentures || 1,
-          indenture_done: data[0].indenture_done || false,
-          indenture_date: data[0].indenture_date || '',
-          indenture_signed: data[0].indenture_signed || false,
-          boss_signed: data[0].boss_signed || false,
-          court_signed: data[0].court_signed || false
+          number_of_indentures: client.number_of_indentures || 1,
+          indenture_done: client.indenture_done || false,
+          indenture_date: client.indenture_date || '',
+          indenture_signed: client.indenture_signed || false,
+          boss_signed: client.boss_signed || false,
+          court_signed: client.court_signed || false
         });
-        setEditData({ ...editData, ...data[0] });
+        setEditData(prev => ({ ...prev, ...client }));
       }
     } catch (error) {
       console.error('Error fetching client:', error);
@@ -203,7 +204,7 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
         <div className="px-6 pb-6">
           <div className="flex flex-col md:flex-row gap-6 mt-6">
             <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-blue-600/30 border-4 border-white dark:border-slate-900 flex-shrink-0">
-              {clientData.full_name.charAt(0)}
+              {editData.full_name?.charAt(0) || '?'}
             </div>
 
             <div className="flex-1">
@@ -211,45 +212,45 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
                 {isEditing ? (
                   <input type="text" value={editData.full_name} onChange={(e) => setEditData({ ...editData, full_name: e.target.value })} className="text-2xl font-bold bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border" />
                 ) : (
-                  <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{clientData.full_name}</h1>
+                  <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{editData.full_name || clientData.full_name}</h1>
                 )}
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${clientData.status === "active" ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600" : "bg-amber-50 dark:bg-amber-900/20 text-amber-600"}`}>
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${editData.status === "active" ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600" : "bg-amber-50 dark:bg-amber-900/20 text-amber-600"}`}>
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  {clientData.status.charAt(0).toUpperCase() + clientData.status.slice(1)}
+                  {(editData.status || clientData.status).charAt(0).toUpperCase() + (editData.status || clientData.status).slice(1)}
                 </span>
               </div>
               
               <div className="flex items-center gap-2 mb-4">
-                <span className="px-2.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-xs font-mono">{clientData.file_number}</span>
+                <span className="px-2.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-xs font-mono">{editData.file_number || clientData.file_number}</span>
                 <span className="text-slate-400">•</span>
-                <span className="text-sm text-slate-500">{clientData.location}</span>
+                <span className="text-sm text-slate-500">{editData.location || clientData.location}</span>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="flex items-center gap-2.5">
                   <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800"><Phone className="w-4 h-4 text-slate-500" /></div>
                   <div>
-                    {isEditing ? <input type="tel" value={editData.phone} onChange={(e) => setEditData({ ...editData, phone: e.target.value })} className="text-sm bg-transparent border-b w-full" /> : <p className="text-sm font-medium">{clientData.phone}</p>}
+                    {isEditing ? <input type="tel" value={editData.phone} onChange={(e) => setEditData({ ...editData, phone: e.target.value })} className="text-sm bg-transparent border-b w-full" /> : <p className="text-sm font-medium">{editData.phone || clientData.phone}</p>}
                     <p className="text-xs text-slate-500">Phone</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800"><Mail className="w-4 h-4 text-slate-500" /></div>
                   <div>
-                    {isEditing ? <input type="email" value={editData.email} onChange={(e) => setEditData({ ...editData, email: e.target.value })} className="text-sm bg-transparent border-b w-full" /> : <p className="text-sm font-medium">{clientData.email}</p>}
+                    {isEditing ? <input type="email" value={editData.email} onChange={(e) => setEditData({ ...editData, email: e.target.value })} className="text-sm bg-transparent border-b w-full" /> : <p className="text-sm font-medium">{editData.email || clientData.email}</p>}
                     <p className="text-xs text-slate-500">Email</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800"><MapPin className="w-4 h-4 text-slate-500" /></div>
                   <div>
-                    {isEditing ? <input type="text" value={editData.address} onChange={(e) => setEditData({ ...editData, address: e.target.value })} className="text-sm bg-transparent border-b w-full" /> : <p className="text-sm font-medium">{clientData.address}</p>}
+                    {isEditing ? <input type="text" value={editData.address} onChange={(e) => setEditData({ ...editData, address: e.target.value })} className="text-sm bg-transparent border-b w-full" /> : <p className="text-sm font-medium">{editData.address || clientData.address}</p>}
                     <p className="text-xs text-slate-500">Address</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800"><Calendar className="w-4 h-4 text-slate-500" /></div>
-                  <div><p className="text-sm font-medium">{clientData.signup_date}</p><p className="text-xs text-slate-500">Joined</p></div>
+                  <div><p className="text-sm font-medium">{editData.signup_date || clientData.signup_date}</p><p className="text-xs text-slate-500">Joined</p></div>
                 </div>
               </div>
             </div>
@@ -290,7 +291,7 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
       </div>
 
       <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        {activeTab === "overview" && <OverviewTab indenture={indentureData} />}
+        {activeTab === "overview" && <OverviewTab indenture={indentureData} clientData={editData} />}
         {activeTab === "siteplan" && <SitePlanTab sitePlanData={sitePlanData} setSitePlanData={setSitePlanData} isEditing={isEditing} clientId={params.id} />}
         {activeTab === "indenture" && <IndentureTab data={indentureData} isEditing={isEditing} setData={setIndentureData} onSave={handleIndentureSave} />}
         {activeTab === "plots" && <PlotsTab sitePlanData={sitePlanData} clientData={editData} />}
@@ -302,7 +303,7 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
   );
 }
 
-function OverviewTab({ indenture }: { indenture: typeof defaultIndenture }) {
+function OverviewTab({ indenture, clientData }: { indenture: typeof defaultIndenture; clientData: any }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
