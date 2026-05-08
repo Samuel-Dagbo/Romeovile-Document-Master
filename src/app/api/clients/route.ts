@@ -11,12 +11,20 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const limit = searchParams.get('limit') || '100'
     const order = searchParams.get('order') || 'created_at.desc'
+    const id = searchParams.get('id')
 
-    const { data, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from('clients')
       .select('*')
       .order('created_at', { ascending: order === 'created_at.asc' })
-      .limit(parseInt(limit))
+
+    if (id) {
+      query = query.eq('id', id)
+    } else {
+      query = query.limit(parseInt(limit))
+    }
+
+    const { data, error } = await query
 
     if (error) throw error
 

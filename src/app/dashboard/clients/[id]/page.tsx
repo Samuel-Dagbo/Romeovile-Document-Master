@@ -96,7 +96,7 @@ export default function ClientProfilePage({ params }: { params: Promise<{ id: st
 
   const fetchClient = async () => {
     try {
-      const res = await fetch(`/api/clients?id=eq.${resolvedParams.id}`);
+      const res = await fetch(`/api/clients?id=${resolvedParams.id}`);
       const data = await res.json();
       if (data && data.length > 0) {
         const client = data[0];
