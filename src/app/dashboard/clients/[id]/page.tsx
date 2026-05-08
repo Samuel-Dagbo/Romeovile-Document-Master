@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -76,7 +76,8 @@ const activities = [
   { id: "4", action: "Document uploaded", description: "Land Agreement uploaded", date: "2026-01-28 16:45", type: "document" },
 ];
 
-export default function ClientProfilePage({ params }: { params: { id: string } }) {
+export default function ClientProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(clientData);
@@ -92,14 +93,13 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
   });
 
   useEffect(() => {
-    fetchIndenture();
-    fetchPlots();
     fetchClient();
-  }, [params.id]);
+    setLoading(false);
+  }, [resolvedParams.id]);
 
   const fetchClient = async () => {
     try {
-      const res = await fetch(`${API_URL}/rest/v1/clients?id=eq.${params.id}&select=*`, {
+      const res = await fetch(`${API_URL}/rest/v1/clients?id=eq.${resolvedParams.id}&select=*`, {
         headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
       });
       if (!res.ok) throw new Error('Failed to fetch client');
@@ -129,19 +129,9 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
     }
   };
 
-  const fetchPlots = async () => {
-    // No longer using separate plots table - data is in client table now
-    setPlots([]);
-  };
-
-  const fetchIndenture = async () => {
-    // No longer using separate indentures table - data is in client table now
-    setLoading(false);
-  };
-
   const handleSave = async () => {
     try {
-      const res = await fetch(`${API_URL}/rest/v1/clients?id=eq.${params.id}`, {
+      const res = await fetch(`${API_URL}/rest/v1/clients?id=eq.${resolvedParams.id}`, {
         method: 'PATCH',
         headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
         body: JSON.stringify({
@@ -179,7 +169,7 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
 
   const handleSitePlanSave = async () => {
     try {
-      const res = await fetch(`${API_URL}/rest/v1/clients?id=eq.${params.id}`, {
+      const res = await fetch(`${API_URL}/rest/v1/clients?id=eq.${resolvedParams.id}`, {
         method: 'PATCH',
         headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
         body: JSON.stringify({
@@ -205,7 +195,7 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
 
   const handleIndentureSave = async () => {
     try {
-      const res = await fetch(`${API_URL}/rest/v1/clients?id=eq.${params.id}`, {
+      const res = await fetch(`${API_URL}/rest/v1/clients?id=eq.${resolvedParams.id}`, {
         method: 'PATCH',
         headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
         body: JSON.stringify({
@@ -316,10 +306,10 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Amount", value: `₵${clientData.total_amount.toLocaleString()}`, icon: DollarSign, color: "blue" },
-          { label: "Balance Due", value: `₵${clientData.balance.toLocaleString()}`, icon: CreditCard, color: "amber" },
-          { label: "Plots", value: plots?.length ? plots.length.toString() : "0", icon: Building2, color: "purple" },
-          { label: "Indentures", value: indentureData?.number_of_indentures ? indentureData.number_of_indentures.toString() : "0", icon: ScrollText, color: "emerald" },
+          { label: "Total Amount", value: `₵${((editData as any).total_amount || clientData.total_amount || 0).toLocaleString()}`, icon: DollarSign, color: "blue" },
+          { label: "Balance Due", value: `₵${((editData as any).balance || clientData.balance || 0).toLocaleString()}`, icon: CreditCard, color: "amber" },
+          { label: "Plots", value: (editData as any).plot_number ? "1" : "0", icon: Building2, color: "purple" },
+          { label: "Indentures", value: (indentureData.number_of_indentures || 0).toString(), icon: ScrollText, color: "emerald" },
         ].map((stat) => (
           <div key={stat.label} className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
             <div className="flex items-center gap-3 mb-2">
@@ -347,7 +337,7 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
 
       <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         {activeTab === "overview" && <OverviewTab indenture={indentureData} clientData={editData} />}
-        {activeTab === "siteplan" && <SitePlanTab sitePlanData={sitePlanData} setSitePlanData={setSitePlanData} isEditing={isEditing} clientId={params.id} onSave={handleSitePlanSave} />}
+        {activeTab === "siteplan" && <SitePlanTab sitePlanData={sitePlanData} setSitePlanData={setSitePlanData} isEditing={isEditing} clientId={resolvedParams.id} onSave={handleSitePlanSave} />}
         {activeTab === "indenture" && <IndentureTab data={indentureData} isEditing={isEditing} setData={setIndentureData} onSave={handleIndentureSave} />}
         {activeTab === "plots" && <PlotsTab sitePlanData={sitePlanData} indentureData={indentureData} clientData={editData} />}
         {activeTab === "documents" && <DocumentsTab documents={documents} />}
