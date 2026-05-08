@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -73,8 +74,9 @@ const activities = [
   { id: "4", action: "Document uploaded", description: "Land Agreement uploaded", date: "2026-01-28 16:45", type: "document" },
 ];
 
-export default function ClientProfilePage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params);
+export default function ClientProfilePage() {
+  const params = useParams();
+  const clientId = params?.id as string || '';
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(clientData);
@@ -91,12 +93,12 @@ export default function ClientProfilePage({ params }: { params: Promise<{ id: st
 
   useEffect(() => {
     fetchClient();
-  }, [resolvedParams.id]);
+  }, [clientId]);
 
   const fetchClient = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/clients?id=${resolvedParams.id}`);
+      const res = await fetch(`/api/clients?id=${clientId}`);
       const data = await res.json();
       
       if (!res.ok || data.error) {
@@ -134,7 +136,7 @@ export default function ClientProfilePage({ params }: { params: Promise<{ id: st
 
   const handleSave = async () => {
     try {
-      const res = await fetch(`/api/clients?id=${resolvedParams.id}`, {
+      const res = await fetch(`/api/clients?id=${clientId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -168,7 +170,7 @@ export default function ClientProfilePage({ params }: { params: Promise<{ id: st
 
   const handleSitePlanSave = async () => {
     try {
-      const res = await fetch(`/api/clients?id=${resolvedParams.id}`, {
+      const res = await fetch(`/api/clients?id=${clientId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -190,7 +192,7 @@ export default function ClientProfilePage({ params }: { params: Promise<{ id: st
 
   const handleIndentureSave = async () => {
     try {
-      const res = await fetch(`/api/clients?id=${resolvedParams.id}`, {
+      const res = await fetch(`/api/clients?id=${clientId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -333,7 +335,7 @@ export default function ClientProfilePage({ params }: { params: Promise<{ id: st
       ) : (
         <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           {activeTab === "overview" && <OverviewTab indenture={indentureData} clientData={editData} />}
-          {activeTab === "siteplan" && <SitePlanTab sitePlanData={sitePlanData} setSitePlanData={setSitePlanData} isEditing={isEditing} clientId={resolvedParams.id} onSave={handleSitePlanSave} />}
+          {activeTab === "siteplan" && <SitePlanTab sitePlanData={sitePlanData} setSitePlanData={setSitePlanData} isEditing={isEditing} clientId={clientId} onSave={handleSitePlanSave} />}
           {activeTab === "indenture" && <IndentureTab data={indentureData} isEditing={isEditing} setData={setIndentureData} onSave={handleIndentureSave} />}
           {activeTab === "plots" && <PlotsTab sitePlanData={sitePlanData} indentureData={indentureData} clientData={editData} />}
           {activeTab === "documents" && <DocumentsTab documents={documents} />}
