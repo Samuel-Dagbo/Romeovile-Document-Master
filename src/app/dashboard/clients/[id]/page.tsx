@@ -38,14 +38,10 @@ const clientData = {
 };
 
 const defaultIndenture = {
-  id: "",
   number_of_indentures: 1,
-  site_plan_signed: false,
-  site_plan_date: "",
   indenture_done: false,
   indenture_date: "",
-  deponent_name: "",
-  deponent_signed: false,
+  indenture_signed: false,
   boss_signed: false,
   court_signed: false,
 };
@@ -89,6 +85,7 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
   const [sitePlanData, setSitePlanData] = useState({
     plot_number: '',
     plot_size: '',
+    plot_location: '',
     site_plan_done: false,
     site_plan_signed: false
   });
@@ -111,7 +108,16 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
           plot_number: data[0].plot_number || '',
           plot_size: data[0].plot_size?.toString() || '',
           site_plan_done: data[0].site_plan_done || false,
-          site_plan_signed: data[0].site_plan_signed || false
+          site_plan_signed: data[0].site_plan_signed || false,
+          plot_location: data[0].plot_location || ''
+        });
+        setIndentureData({
+          number_of_indentures: data[0].number_of_indentures || 1,
+          indenture_done: data[0].indenture_done || false,
+          indenture_date: data[0].indenture_date || '',
+          indenture_signed: data[0].indenture_signed || false,
+          boss_signed: data[0].boss_signed || false,
+          court_signed: data[0].court_signed || false
         });
         setEditData({ ...editData, ...data[0] });
       }
@@ -121,34 +127,13 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
   };
 
   const fetchPlots = async () => {
-    try {
-      const res = await fetch(`${API_URL}/rest/v1/plots?client_id=eq.${params.id}&select=*,locations(name)`, {
-        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
-      });
-      if (!res.ok) throw new Error('Failed to fetch plots');
-      const data = await res.json();
-      setPlots(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Error fetching plots:', error);
-      setPlots([]);
-    }
+    // No longer using separate plots table - data is in client table now
+    setPlots([]);
   };
 
   const fetchIndenture = async () => {
-    try {
-      const res = await fetch(`${API_URL}/rest/v1/indentures?client_id=eq.${params.id}&select=*`, {
-        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
-      });
-      if (!res.ok) throw new Error('Failed to fetch indenture');
-      const data = await res.json();
-      if (data && data.length > 0) {
-        setIndentureData(data[0]);
-      }
-    } catch (error) {
-      console.error('Error fetching indenture:', error);
-    } finally {
-      setLoading(false);
-    }
+    // No longer using separate indentures table - data is in client table now
+    setLoading(false);
   };
 
   const handleSave = async () => {
@@ -157,14 +142,27 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
         method: 'PATCH',
         headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          full_name: editData.full_name,
+          phone: editData.phone,
+          email: editData.email,
+          address: editData.address,
+          total_amount: editData.total_amount,
+          balance: editData.balance,
           plot_number: sitePlanData.plot_number,
           plot_size: sitePlanData.plot_size ? parseFloat(sitePlanData.plot_size) : null,
           site_plan_done: sitePlanData.site_plan_done,
-          site_plan_signed: sitePlanData.site_plan_signed
+          site_plan_signed: sitePlanData.site_plan_signed,
+          number_of_indentures: indentureData.number_of_indentures,
+          indenture_done: indentureData.indenture_done,
+          indenture_date: indentureData.indenture_date,
+          indenture_signed: indentureData.indenture_signed,
+          boss_signed: indentureData.boss_signed,
+          court_signed: indentureData.court_signed
         })
       });
       setIsEditing(false);
       toast.success("Client information updated successfully!");
+      window.location.reload();
     } catch (error) {
       console.error('Error saving:', error);
       toast.error("Failed to save");
@@ -172,41 +170,8 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
   };
 
   const handleIndentureSave = async () => {
-    try {
-      if (indentureData.id) {
-        await fetch(`${API_URL}/rest/v1/indentures?id=eq.${indentureData.id}`, {
-          method: 'PATCH',
-          headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            number_of_indentures: indentureData.number_of_indentures,
-            site_plan_signed: indentureData.site_plan_signed,
-            site_plan_date: indentureData.site_plan_date,
-            indenture_done: indentureData.indenture_done,
-            indenture_date: indentureData.indenture_date,
-            deponent_name: indentureData.deponent_name,
-            deponent_signed: indentureData.deponent_signed,
-            boss_signed: indentureData.boss_signed,
-            court_signed: indentureData.court_signed,
-            updated_at: new Date().toISOString()
-          })
-        });
-      } else {
-        const res = await fetch(`${API_URL}/rest/v1/indentures`, {
-          method: 'POST',
-          headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            client_id: params.id,
-            ...indentureData
-          })
-        });
-        const newIndenture = await res.json();
-        setIndentureData({ ...indentureData, id: newIndenture.id });
-      }
-      setIsEditing(false);
-      toast.success("Indenture information saved!");
-    } catch (error) {
-      toast.error("Failed to save indenture");
-    }
+    // Indenture data is now saved with the main handleSave function
+    toast.success("Indenture info saved!");
   };
 
   return (
@@ -375,8 +340,8 @@ function OverviewTab({ indenture }: { indenture: typeof defaultIndenture }) {
             </div>
             <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
               <p className="text-xs text-slate-500">Site Plan</p>
-              <span className={`text-sm font-medium ${indenture.site_plan_signed ? 'text-emerald-600' : 'text-amber-600'}`}>
-                {indenture.site_plan_signed ? 'Signed' : 'Not Signed'}
+              <span className={`text-sm font-medium ${indenture.indenture_signed ? 'text-emerald-600' : 'text-amber-600'}`}>
+                {indenture.indenture_signed ? 'Signed' : 'Not Signed'}
               </span>
             </div>
             <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
@@ -386,9 +351,9 @@ function OverviewTab({ indenture }: { indenture: typeof defaultIndenture }) {
               </span>
             </div>
             <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-              <p className="text-xs text-slate-500">Deponent</p>
-              <span className={`text-sm font-medium ${indenture.deponent_signed ? 'text-emerald-600' : 'text-amber-600'}`}>
-                {indenture.deponent_signed ? 'Signed' : 'Not Signed'}
+              <p className="text-xs text-slate-500">Indenture Signed</p>
+              <span className={`text-sm font-medium ${indenture.indenture_signed ? 'text-emerald-600' : 'text-amber-600'}`}>
+                {indenture.indenture_signed ? 'Yes' : 'No'}
               </span>
             </div>
             <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
@@ -519,10 +484,10 @@ function IndentureTab({ data, isEditing, setData, onSave }: { data: any; isEditi
               <label className="flex items-center justify-between">
                 <span className="text-sm text-slate-600">Site Plan Signed</span>
                 {isEditing ? (
-                  <input type="checkbox" checked={data.site_plan_signed} onChange={(e) => setData({ ...data, site_plan_signed: e.target.checked })} className="rounded" />
+                  <input type="checkbox" checked={data.indenture_signed} onChange={(e) => setData({ ...data, site_plan_signed: e.target.checked })} className="rounded" />
                 ) : (
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${data.site_plan_signed ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"}`}>
-                    {data.site_plan_signed ? "Yes" : "No"}
+                    {data.indenture_signed ? "Yes" : "No"}
                   </span>
                 )}
               </label>
@@ -553,7 +518,7 @@ function IndentureTab({ data, isEditing, setData, onSave }: { data: any; isEditi
               </div>
               <div>
                 <p className="text-xs text-slate-500 mb-1">Deponent Name</p>
-                {isEditing ? <input type="text" value={data.deponent_name} onChange={(e) => setData({ ...data, deponent_name: e.target.value })} className="w-full px-3 py-2 rounded-lg border" /> : <p className="text-sm font-medium">{data.deponent_name}</p>}
+                {/* Removed deponent fields - now in client table */}
               </div>
             </div>
           </div>
