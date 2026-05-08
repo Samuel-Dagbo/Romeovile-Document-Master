@@ -294,7 +294,7 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
         {activeTab === "overview" && <OverviewTab indenture={indentureData} clientData={editData} />}
         {activeTab === "siteplan" && <SitePlanTab sitePlanData={sitePlanData} setSitePlanData={setSitePlanData} isEditing={isEditing} clientId={params.id} />}
         {activeTab === "indenture" && <IndentureTab data={indentureData} isEditing={isEditing} setData={setIndentureData} onSave={handleIndentureSave} />}
-        {activeTab === "plots" && <PlotsTab sitePlanData={sitePlanData} clientData={editData} />}
+        {activeTab === "plots" && <PlotsTab sitePlanData={sitePlanData} indentureData={indentureData} clientData={editData} />}
         {activeTab === "documents" && <DocumentsTab documents={documents} />}
         {activeTab === "payments" && <PaymentsTab payments={payments} />}
         {activeTab === "activity" && <ActivityTab activities={activities} />}
@@ -554,7 +554,7 @@ function IndentureTab({ data, isEditing, setData, onSave }: { data: any; isEditi
   );
 }
 
-function PlotsTab({ sitePlanData, clientData }: { sitePlanData: any; clientData: any }) {
+function PlotsTab({ sitePlanData, indentureData, clientData }: { sitePlanData: any; indentureData: any; clientData: any }) {
   return (
     <div className="space-y-6">
       <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
@@ -599,20 +599,20 @@ function PlotsTab({ sitePlanData, clientData }: { sitePlanData: any; clientData:
           </div>
           <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl text-center">
             <p className="text-xs text-slate-500 mb-2">Indenture</p>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${sitePlanData.indenture_signed ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
-              {sitePlanData.indenture_signed ? "Signed" : "Unsigned"}
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${indentureData.indenture_signed ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
+              {indentureData.indenture_signed ? "Signed" : "Unsigned"}
             </span>
           </div>
           <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl text-center">
             <p className="text-xs text-slate-500 mb-2">Boss</p>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${sitePlanData.boss_signed ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
-              {sitePlanData.boss_signed ? "Signed" : "Unsigned"}
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${indentureData.boss_signed ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
+              {indentureData.boss_signed ? "Signed" : "Unsigned"}
             </span>
           </div>
           <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl text-center">
             <p className="text-xs text-slate-500 mb-2">Court</p>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${sitePlanData.court_signed ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
-              {sitePlanData.court_signed ? "Signed" : "Unsigned"}
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${indentureData.court_signed ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
+              {indentureData.court_signed ? "Signed" : "Unsigned"}
             </span>
           </div>
         </div>
