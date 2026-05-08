@@ -23,6 +23,7 @@ interface Client {
   number_of_indentures: number;
   indenture_done: boolean;
   indenture_date: string;
+  site_plan_signed: boolean;
   indenture_signed: boolean;
   boss_signed: boolean;
   court_signed: boolean;
@@ -67,8 +68,8 @@ export default function IndenturesPage() {
   const stats = [
     { label: "Total Clients", value: clients.length },
     { label: "Indentures Done", value: clients.filter((c) => c.indenture_done).length },
-    { label: "Boss Signed", value: clients.filter((c) => c.boss_signed).length },
-    { label: "Court Signed", value: clients.filter((c) => c.court_signed).length },
+    { label: "All Signed", value: clients.filter((c) => c.indenture_signed && c.boss_signed && c.court_signed).length },
+    { label: "Pending", value: clients.filter((c) => !c.indenture_done || !c.indenture_signed || !c.boss_signed || !c.court_signed).length },
   ];
 
   return (
@@ -124,7 +125,7 @@ export default function IndenturesPage() {
                 </div>
               </div>
 
-              <div className="space-y-2 text-sm">
+              <div className="space-y-3 text-sm">
                 <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
                   <span className="text-muted-foreground flex items-center gap-1">
                     <Building2 className="w-3.5 h-3.5" /> Plot No
@@ -141,18 +142,28 @@ export default function IndenturesPage() {
                   </span>
                   <span className="font-medium">{client.indenture_date || "—"}</span>
                 </div>
-                <div className="grid grid-cols-3 gap-2 pt-2">
+                <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                  <span className="text-muted-foreground">Status</span>
+                  <span className={`font-medium ${client.indenture_done ? "text-emerald-600" : "text-amber-600"}`}>
+                    {client.indenture_done ? "Complete" : "Pending"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 gap-2 pt-2">
+                  <div className={`text-center p-2 rounded-lg ${client.site_plan_signed ? "bg-emerald-50 dark:bg-emerald-900/20" : "bg-slate-50 dark:bg-slate-800"}`}>
+                    {client.site_plan_signed ? <CheckCircle className="w-4 h-4 text-emerald-600 mx-auto" /> : <XCircle className="w-4 h-4 text-slate-400 mx-auto" />}
+                    <p className="text-xs mt-1">SP</p>
+                  </div>
                   <div className={`text-center p-2 rounded-lg ${client.indenture_signed ? "bg-emerald-50 dark:bg-emerald-900/20" : "bg-slate-50 dark:bg-slate-800"}`}>
                     {client.indenture_signed ? <CheckCircle className="w-4 h-4 text-emerald-600 mx-auto" /> : <XCircle className="w-4 h-4 text-slate-400 mx-auto" />}
-                    <p className="text-xs mt-1">Signed</p>
+                    <p className="text-xs mt-1">DP</p>
                   </div>
                   <div className={`text-center p-2 rounded-lg ${client.boss_signed ? "bg-emerald-50 dark:bg-emerald-900/20" : "bg-slate-50 dark:bg-slate-800"}`}>
                     {client.boss_signed ? <CheckCircle className="w-4 h-4 text-emerald-600 mx-auto" /> : <XCircle className="w-4 h-4 text-slate-400 mx-auto" />}
-                    <p className="text-xs mt-1">Boss</p>
+                    <p className="text-xs mt-1">BS</p>
                   </div>
                   <div className={`text-center p-2 rounded-lg ${client.court_signed ? "bg-emerald-50 dark:bg-emerald-900/20" : "bg-slate-50 dark:bg-slate-800"}`}>
                     {client.court_signed ? <CheckCircle className="w-4 h-4 text-emerald-600 mx-auto" /> : <XCircle className="w-4 h-4 text-slate-400 mx-auto" />}
-                    <p className="text-xs mt-1">Court</p>
+                    <p className="text-xs mt-1">CT</p>
                   </div>
                 </div>
                 <Link 

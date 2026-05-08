@@ -17,6 +17,9 @@ interface Client {
   file_number: string;
   plot_number: string;
   plot_size: number;
+  plot_location: string;
+  site_plan_done: boolean;
+  site_plan_signed: boolean;
   status: string;
 }
 
@@ -34,7 +37,7 @@ export default function PlotsPage() {
 
   const fetchClients = async () => {
     try {
-      const res = await fetch(`${API_URL}/rest/v1/clients?select=id,full_name,file_number,plot_number,plot_size,status&plot_number=not.is.null`, {
+      const res = await fetch(`${API_URL}/rest/v1/clients?select=id,full_name,file_number,plot_number,plot_size,plot_location,site_plan_done,site_plan_signed,status&plot_number=not.is.null`, {
         headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
       });
       const data = await res.json();
@@ -55,9 +58,10 @@ export default function PlotsPage() {
   });
 
   const stats = [
-    { label: "Total Clients", value: clients.length, color: "text-blue-600" },
-    { label: "With Plots", value: clients.filter((c) => c.plot_number).length, color: "text-emerald-600" },
-    { label: "No Plots", value: clients.filter((c) => !c.plot_number).length, color: "text-amber-600" },
+    { label: "Total Plots", value: clients.length, color: "text-blue-600" },
+    { label: "Site Plans Done", value: clients.filter((c) => c.site_plan_done).length, color: "text-emerald-600" },
+    { label: "Signed", value: clients.filter((c) => c.site_plan_signed).length, color: "text-purple-600" },
+    { label: "Pending", value: clients.filter((c) => !c.site_plan_done).length, color: "text-amber-600" },
   ];
 
   return (
@@ -126,9 +130,27 @@ export default function PlotsPage() {
                 </div>
                 <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
                   <span className="text-muted-foreground flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5" /> Location
+                  </span>
+                  <span className="font-medium">{client.plot_location || "—"}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                  <span className="text-muted-foreground flex items-center gap-1">
                     <MapPin className="w-3.5 h-3.5" /> Plot Size
                   </span>
                   <span className="font-medium">{client.plot_size ? `${client.plot_size} acres` : "—"}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                  <span className="text-muted-foreground">Site Plan</span>
+                  <span className={`font-medium ${client.site_plan_done ? "text-emerald-600" : "text-amber-600"}`}>
+                    {client.site_plan_done ? "Done" : "Pending"}
+                  </span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                  <span className="text-muted-foreground">Signed</span>
+                  <span className={`font-medium ${client.site_plan_signed ? "text-emerald-600" : "text-amber-600"}`}>
+                    {client.site_plan_signed ? "Yes" : "No"}
+                  </span>
                 </div>
                 <Link 
                   href={`/dashboard/clients/${client.id}`}
