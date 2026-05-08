@@ -86,11 +86,39 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
   const [indentureData, setIndentureData] = useState(defaultIndenture);
   const [plots, setPlots] = useState<Plot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sitePlanData, setSitePlanData] = useState({
+    plot_number: '',
+    plot_size: '',
+    site_plan_done: false,
+    site_plan_signed: false
+  });
 
   useEffect(() => {
     fetchIndenture();
     fetchPlots();
+    fetchClient();
   }, [params.id]);
+
+  const fetchClient = async () => {
+    try {
+      const res = await fetch(`${API_URL}/rest/v1/clients?id=eq.${params.id}&select=*`, {
+        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
+      });
+      if (!res.ok) throw new Error('Failed to fetch client');
+      const data = await res.json();
+      if (data && data.length > 0) {
+        setSitePlanData({
+          plot_number: data[0].plot_number || '',
+          plot_size: data[0].plot_size?.toString() || '',
+          site_plan_done: data[0].site_plan_done || false,
+          site_plan_signed: data[0].site_plan_signed || false
+        });
+        setEditData({ ...editData, ...data[0] });
+      }
+    } catch (error) {
+      console.error('Error fetching client:', error);
+    }
+  };
 
   const fetchPlots = async () => {
     try {
@@ -123,9 +151,24 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
     }
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    toast.success("Client information updated successfully!");
+  const handleSave = async () => {
+    try {
+      await fetch(`${API_URL}/rest/v1/clients?id=eq.${params.id}`, {
+        method: 'PATCH',
+        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plot_number: sitePlanData.plot_number,
+          plot_size: sitePlanData.plot_size ? parseFloat(sitePlanData.plot_size) : null,
+          site_plan_done: sitePlanData.site_plan_done,
+          site_plan_signed: sitePlanData.site_plan_signed
+        })
+      });
+      setIsEditing(false);
+      toast.success("Client information updated successfully!");
+    } catch (error) {
+      console.error('Error saving:', error);
+      toast.error("Failed to save");
+    }
   };
 
   const handleIndentureSave = async () => {
@@ -282,7 +325,7 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
 
       <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         {activeTab === "overview" && <OverviewTab indenture={indentureData} />}
-        {activeTab === "siteplan" && <SitePlanTab plots={plots} isEditing={isEditing} setPlots={setPlots} clientId={params.id} />}
+        {activeTab === "siteplan" && <SitePlanTab sitePlanData={sitePlanData} setSitePlanData={setSitePlanData} isEditing={isEditing} clientId={params.id} />}
         {activeTab === "indenture" && <IndentureTab data={indentureData} isEditing={isEditing} setData={setIndentureData} onSave={handleIndentureSave} />}
         {activeTab === "plots" && <PlotsTab plots={plots} />}
         {activeTab === "documents" && <DocumentsTab documents={documents} />}
@@ -367,207 +410,78 @@ function OverviewTab({ indenture }: { indenture: typeof defaultIndenture }) {
   );
 }
 
-function SitePlanTab({ plots, isEditing, setPlots, clientId }: { plots: Plot[]; isEditing: boolean; setPlots: any; clientId: string }) {
-  const API_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const API_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  const [addingPlot, setAddingPlot] = useState(false);
-  const [newPlot, setNewPlot] = useState({
-    plot_number: '',
-    acreage: '',
-    site_plan_done: false,
-    site_plan_signed: false,
-    locality_id: ''
-  });
-
-  const handleAddPlot = async () => {
-    try {
-      const res = await fetch(`${API_URL}/rest/v1/plots`, {
-        method: 'POST',
-        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-        body: JSON.stringify({
-          client_id: clientId,
-          plot_number: newPlot.plot_number || `PL-${Date.now().toString().slice(-4)}`,
-          acreage: newPlot.acreage ? parseFloat(newPlot.acreage.toString()) : null,
-          site_plan_done: newPlot.site_plan_done,
-          site_plan_signed: newPlot.site_plan_signed,
-          status: 'sold',
-          plot_picked: true
-        })
-      });
-      if (res.ok) {
-        setAddingPlot(false);
-        setNewPlot({ plot_number: '', acreage: '', site_plan_done: false, site_plan_signed: false, locality_id: '' });
-        window.location.reload();
-      }
-    } catch (error) {
-      console.error('Error adding plot:', error);
-    }
-  };
-
-  const handlePlotChange = async (plotId: string, field: string, value: any) => {
-    const updatedPlots = plots.map(p => p.id === plotId ? { ...p, [field]: value } : p);
-    setPlots(updatedPlots);
-
-    if (isEditing && plotId !== 'new') {
-      try {
-        await fetch(`${API_URL}/rest/v1/plots?id=eq.${plotId}`, {
-          method: 'PATCH',
-          headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ [field]: value })
-        });
-      } catch (error) {
-        console.error('Error updating plot:', error);
-      }
-    }
-  };
-
+function SitePlanTab({ sitePlanData, setSitePlanData, isEditing, clientId }: { sitePlanData: any; setSitePlanData: any; isEditing: boolean; clientId: string }) {
   return (
-    <div className="space-y-6">
-      <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold">Site Plan Information</h3>
-          {!addingPlot && isEditing && (
-            <button onClick={() => setAddingPlot(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium flex items-center gap-2">
-              <Plus className="w-4 h-4" />Add Plot
-            </button>
+    <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
+      <h3 className="text-lg font-semibold mb-6">Site Plan Information</h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div>
+          <p className="text-xs text-slate-500 mb-2">Site Plan</p>
+          {isEditing ? (
+            <select
+              value={sitePlanData.site_plan_done ? "true" : "false"}
+              onChange={(e) => setSitePlanData({ ...sitePlanData, site_plan_done: e.target.value === "true" })}
+              className="w-full px-3 py-2 rounded-lg border text-sm"
+            >
+              <option value="false">No</option>
+              <option value="true">Yes</option>
+            </select>
+          ) : (
+            <span className={`px-3 py-2 rounded-lg text-sm font-medium inline-block ${sitePlanData.site_plan_done ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
+              {sitePlanData.site_plan_done ? "Yes" : "No"}
+            </span>
           )}
         </div>
 
-        {addingPlot && (
-          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl mb-4">
-            <h4 className="font-semibold mb-4">New Plot</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <p className="text-xs text-slate-500 mb-1">Site Plan</p>
-                <select
-                  value={newPlot.site_plan_done ? "true" : "false"}
-                  onChange={(e) => setNewPlot({ ...newPlot, site_plan_done: e.target.value === "true" })}
-                  className="w-full px-3 py-2 rounded-lg border text-sm"
-                >
-                  <option value="true">Yes</option>
-                  <option value="false">No</option>
-                </select>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 mb-1">Plot No</p>
-                <input
-                  type="text"
-                  value={newPlot.plot_number}
-                  onChange={(e) => setNewPlot({ ...newPlot, plot_number: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border text-sm"
-                  placeholder="PL-001"
-                />
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 mb-1">Plot Size (acres)</p>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={newPlot.acreage}
-                  onChange={(e) => setNewPlot({ ...newPlot, acreage: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border text-sm"
-                  placeholder="2.5"
-                />
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 mb-1">Site Plan Signed</p>
-                <select
-                  value={newPlot.site_plan_signed ? "true" : "false"}
-                  onChange={(e) => setNewPlot({ ...newPlot, site_plan_signed: e.target.value === "true" })}
-                  className="w-full px-3 py-2 rounded-lg border text-sm"
-                >
-                  <option value="true">Yes</option>
-                  <option value="false">No</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex gap-2 mt-4">
-              <button onClick={handleAddPlot} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium">Save Plot</button>
-              <button onClick={() => setAddingPlot(false)} className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium">Cancel</button>
-            </div>
-          </div>
-        )}
+        <div>
+          <p className="text-xs text-slate-500 mb-2">Plot No</p>
+          {isEditing ? (
+            <input
+              type="text"
+              value={sitePlanData.plot_number || ""}
+              onChange={(e) => setSitePlanData({ ...sitePlanData, plot_number: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg border text-sm"
+              placeholder="PL-001"
+            />
+          ) : (
+            <span className="text-sm font-medium">{sitePlanData.plot_number || "-"}</span>
+          )}
+        </div>
 
-        {(plots.length === 0 && !addingPlot) ? (
-          <div className="text-center py-8">
-            <Map className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500 mb-4">No plots assigned yet</p>
-            {isEditing && (
-              <button onClick={() => setAddingPlot(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium flex items-center gap-2 mx-auto">
-                <Plus className="w-4 h-4" />Add Plot
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {plots.map((plot, index) => (
-              <div key={plot.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
-                    <span className="text-purple-600 font-medium">{index + 1}</span>
-                  </div>
-                  <h4 className="font-semibold">Plot {index + 1}</h4>
-                </div>
+        <div>
+          <p className="text-xs text-slate-500 mb-2">Plot Size (acres)</p>
+          {isEditing ? (
+            <input
+              type="number"
+              step="0.1"
+              value={sitePlanData.plot_size || ""}
+              onChange={(e) => setSitePlanData({ ...sitePlanData, plot_size: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg border text-sm"
+              placeholder="2.5"
+            />
+          ) : (
+            <span className="text-sm font-medium">{sitePlanData.plot_size ? `${sitePlanData.plot_size} acres` : "-"}</span>
+          )}
+        </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">Site Plan</p>
-                    {isEditing ? (
-                      <select
-                        value={plot.site_plan_done ? "true" : "false"}
-                        onChange={(e) => handlePlotChange(plot.id, 'site_plan_done', e.target.value === "true")}
-                        className="w-full px-3 py-2 rounded-lg border text-sm"
-                      >
-                        <option value="true">Yes</option>
-                        <option value="false">No</option>
-                      </select>
-                    ) : (
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${plot.site_plan_done ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"}`}>
-                        {plot.site_plan_done ? "Yes" : "No"}
-                      </span>
-                    )}
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">Plot No</p>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={plot.plot_number || ""}
-                        onChange={(e) => handlePlotChange(plot.id, 'plot_number', e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border text-sm"
-                        placeholder="PL-001"
-                      />
-                    ) : (
-                      <p className="text-sm font-medium">{plot.plot_number || "-"}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">Plot Size (acres)</p>
-                    {isEditing ? (
-                      <input
-                        type="number"
-                        step="0.1"
-                        value={plot.acreage || ""}
-                        onChange={(e) => handlePlotChange(plot.id, 'acreage', parseFloat(e.target.value))}
-                        className="w-full px-3 py-2 rounded-lg border text-sm"
-                        placeholder="2.5"
-                      />
-                    ) : (
-                      <p className="text-sm font-medium">{plot.acreage ? `${plot.acreage} acres` : "-"}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">Location</p>
-                    <p className="text-sm font-medium">{plot.location_name || "Obuasi Municipal"}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <div>
+          <p className="text-xs text-slate-500 mb-2">Site Plan Signed</p>
+          {isEditing ? (
+            <select
+              value={sitePlanData.site_plan_signed ? "true" : "false"}
+              onChange={(e) => setSitePlanData({ ...sitePlanData, site_plan_signed: e.target.value === "true" })}
+              className="w-full px-3 py-2 rounded-lg border text-sm"
+            >
+              <option value="false">No</option>
+              <option value="true">Yes</option>
+            </select>
+          ) : (
+            <span className={`px-3 py-2 rounded-lg text-sm font-medium inline-block ${sitePlanData.site_plan_signed ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
+              {sitePlanData.site_plan_signed ? "Yes" : "No"}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
