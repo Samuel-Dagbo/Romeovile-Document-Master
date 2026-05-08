@@ -31,6 +31,10 @@ CREATE TABLE IF NOT EXISTS clients (
   balance DECIMAL DEFAULT 0,
   status TEXT DEFAULT 'active',
   profile_image_url TEXT,
+  plot_number TEXT,
+  plot_size DECIMAL,
+  site_plan_done BOOLEAN DEFAULT false,
+  site_plan_signed BOOLEAN DEFAULT false,
   created_by UUID REFERENCES users(id),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

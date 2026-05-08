@@ -33,6 +33,10 @@ export default function ClientsPage() {
     address: "",
     location: "",
     total_amount: "",
+    plot_number: "",
+    plot_size: "",
+    site_plan: false,
+    site_plan_signed: false,
   });
 
   const searchResults = searchQuery.length > 0 
@@ -413,6 +417,57 @@ export default function ClientsPage() {
                     </div>
                   </div>
                 </div>
+
+                <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                    Site Plan Details
+                  </label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">Site Plan</label>
+                      <select
+                        value={newClient.site_plan ? "true" : "false"}
+                        onChange={(e) => setNewClient({ ...newClient, site_plan: e.target.value === "true" })}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                      >
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">Plot No</label>
+                      <input
+                        type="text"
+                        value={newClient.plot_number}
+                        onChange={(e) => setNewClient({ ...newClient, plot_number: e.target.value })}
+                        placeholder="PL-001"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">Plot Size (acres)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={newClient.plot_size}
+                        onChange={(e) => setNewClient({ ...newClient, plot_size: e.target.value })}
+                        placeholder="2.5"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">Site Plan Signed</label>
+                      <select
+                        value={newClient.site_plan_signed ? "true" : "false"}
+                        onChange={(e) => setNewClient({ ...newClient, site_plan_signed: e.target.value === "true" })}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                      >
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-end gap-3">
@@ -423,15 +478,66 @@ export default function ClientsPage() {
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     if (!newClient.full_name || !newClient.phone) {
                       toast.error("Please fill in required fields");
                       return;
                     }
-                    // Add client logic here - save to database
-                    toast.success("Client created successfully!");
-                    setShowAddModal(false);
-                    setNewClient({ full_name: "", phone: "", email: "", address: "", location: "", total_amount: "" });
+                    
+                    const API_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+                    const API_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+                    
+                    try {
+                      // Create client with site plan details
+                      const clientRes = await fetch(`${API_URL}/rest/v1/clients`, {
+                        method: 'POST',
+                        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                        body: JSON.stringify({
+                          full_name: newClient.full_name,
+                          phone: newClient.phone,
+                          email: newClient.email,
+                          address: newClient.address,
+                          file_number: `RV-${Date.now().toString().slice(-6)}`,
+                          total_amount: parseFloat(newClient.total_amount) || 0,
+                          balance: parseFloat(newClient.total_amount) || 0,
+                          status: 'active',
+                          signup_date: new Date().toISOString().split('T')[0],
+                          plot_number: newClient.plot_number || null,
+                          plot_size: newClient.plot_size ? parseFloat(newClient.plot_size) : null,
+                          site_plan_done: newClient.site_plan,
+                          site_plan_signed: newClient.site_plan_signed
+                        })
+                      });
+                      
+                      if (!clientRes.ok) throw new Error('Failed to create client');
+                      
+                      // Get the new client ID from location header
+                      const clientId = clientRes.headers.get('location')?.split('/').pop();
+                      
+                      // Also create a plot record if site plan details provided (for backward compatibility)
+                      if (newClient.plot_number || newClient.plot_size) {
+                        await fetch(`${API_URL}/rest/v1/plots`, {
+                          method: 'POST',
+                          headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                          body: JSON.stringify({
+                            client_id: clientId,
+                            plot_number: newClient.plot_number || `PL-${Date.now().toString().slice(-4)}`,
+                            acreage: parseFloat(newClient.plot_size) || null,
+                            site_plan_done: newClient.site_plan,
+                            site_plan_signed: newClient.site_plan_signed,
+                            status: 'sold',
+                            plot_picked: true
+                          })
+                        });
+                      }
+                      
+                      toast.success("Client created successfully!");
+                      setShowAddModal(false);
+                      setNewClient({ full_name: "", phone: "", email: "", address: "", location: "", total_amount: "", plot_number: "", plot_size: "", site_plan: false, site_plan_signed: false });
+                    } catch (error) {
+                      console.error('Error creating client:', error);
+                      toast.error("Failed to create client");
+                    }
                   }}
                   className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:shadow-lg transition-all flex items-center gap-2"
                 >
