@@ -185,22 +185,28 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
 
       {/* Profile Header Card */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-        <div className="h-24 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 relative">
-          <div className="absolute top-4 right-4 flex gap-2">
+        <div className="h-32 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 relative">
+          <div className="absolute bottom-3 right-4 flex gap-2">
             <button onClick={() => setIsEditing(!isEditing)} className="px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-lg text-white text-sm font-medium hover:bg-white/30 transition-colors flex items-center gap-1.5">
               <Edit3 className="w-3.5 h-3.5" />
               {isEditing ? "Cancel" : "Edit"}
             </button>
+            {isEditing && (
+              <button onClick={handleSave} className="px-3 py-1.5 bg-white backdrop-blur-sm rounded-lg text-blue-600 text-sm font-medium hover:bg-white/90 transition-colors flex items-center gap-1.5">
+                <Save className="w-3.5 h-3.5" />
+                Save
+              </button>
+            )}
           </div>
         </div>
 
         <div className="px-6 pb-6">
-          <div className="flex flex-col md:flex-row gap-6 -mt-12">
+          <div className="flex flex-col md:flex-row gap-6 mt-6">
             <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-blue-600/30 border-4 border-white dark:border-slate-900 flex-shrink-0">
               {clientData.full_name.charAt(0)}
             </div>
 
-            <div className="flex-1 pt-2">
+            <div className="flex-1">
               <div className="flex flex-col md:flex-row md:items-center gap-3 mb-3">
                 {isEditing ? (
                   <input type="text" value={editData.full_name} onChange={(e) => setEditData({ ...editData, full_name: e.target.value })} className="text-2xl font-bold bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border" />
@@ -247,12 +253,6 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
                 </div>
               </div>
             </div>
-
-            {isEditing && (
-              <div className="flex items-start pt-2">
-                <button onClick={handleSave} className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-blue-700"><Save className="w-4 h-4" />Save</button>
-              </div>
-            )}
           </div>
         </div>
       </motion.div>
@@ -293,7 +293,7 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
         {activeTab === "overview" && <OverviewTab indenture={indentureData} />}
         {activeTab === "siteplan" && <SitePlanTab sitePlanData={sitePlanData} setSitePlanData={setSitePlanData} isEditing={isEditing} clientId={params.id} />}
         {activeTab === "indenture" && <IndentureTab data={indentureData} isEditing={isEditing} setData={setIndentureData} onSave={handleIndentureSave} />}
-        {activeTab === "plots" && <PlotsTab />}
+        {activeTab === "plots" && <PlotsTab sitePlanData={sitePlanData} clientData={editData} />}
         {activeTab === "documents" && <DocumentsTab documents={documents} />}
         {activeTab === "payments" && <PaymentsTab payments={payments} />}
         {activeTab === "activity" && <ActivityTab activities={activities} />}
@@ -308,7 +308,16 @@ function OverviewTab({ indenture }: { indenture: typeof defaultIndenture }) {
       <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
         <h3 className="text-lg font-semibold mb-4">Client Details</h3>
         <div className="space-y-3">
-          {[{ label: "Full Name", value: "Kwame Asante" }, { label: "File Number", value: "RV-OBM-26-001" }, { label: "Phone", value: "+233501234567" }, { label: "Email", value: "kwame@email.com" }, { label: "Address", value: "Obuasi Central, Ashanti Region" }, { label: "Location", value: "Obuasi Municipal" }, { label: "Signup Date", value: "January 15, 2026" }, { label: "Status", value: "Active", isStatus: true }].map((item) => (
+          {[
+            { label: "Full Name", value: clientData.full_name },
+            { label: "File Number", value: clientData.file_number },
+            { label: "Phone", value: clientData.phone },
+            { label: "Email", value: clientData.email },
+            { label: "Address", value: clientData.address },
+            { label: "Location", value: clientData.location },
+            { label: "Signup Date", value: clientData.signup_date },
+            { label: "Status", value: "Active", isStatus: true }
+          ].map((item) => (
             <div key={item.label} className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
               <span className="text-sm text-slate-500">{item.label}</span>
               {item.isStatus ? <span className="text-sm font-medium text-emerald-600">Active</span> : <span className="text-sm font-medium">{item.value}</span>}
@@ -457,108 +466,86 @@ function IndentureTab({ data, isEditing, setData, onSave }: { data: any; isEditi
   return (
     <div className="space-y-6">
       <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold">Indenture Information</h3>
-          {isEditing && <button onClick={onSave} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium flex items-center gap-2"><Save className="w-4 h-4" />Save</button>}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center">
+            <ScrollText className="w-6 h-6 text-emerald-600" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-slate-900 dark:text-white">Indenture Information</h4>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Client's indenture status and signatures</p>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Number of Indentures */}
-          <div className="space-y-4">
-            <h4 className="font-medium text-slate-900 dark:text-white border-b pb-2">Details</h4>
-            <div className="space-y-3">
-              <div>
-                <p className="text-xs text-slate-500 mb-1">Number of Indentures</p>
-                {isEditing ? (
-                  <input type="number" value={data.number_of_indentures} onChange={(e) => setData({ ...data, number_of_indentures: parseInt(e.target.value) || 1 })} className="w-full px-3 py-2 rounded-lg border" min="1" />
-                ) : (
-                  <p className="text-sm font-medium">{data.number_of_indentures || 1}</p>
-                )}
-              </div>
-            </div>
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+            <p className="text-xs text-slate-500 mb-1">Number of Indentures</p>
+            {isEditing ? (
+              <input type="number" value={data.number_of_indentures} onChange={(e) => setData({ ...data, number_of_indentures: parseInt(e.target.value) || 1 })} className="w-full px-3 py-2 rounded-lg border" min="1" />
+            ) : (
+              <p className="text-xl font-bold text-slate-900 dark:text-white">{data.number_of_indentures || 1}</p>
+            )}
           </div>
 
-          {/* Site Plan Section */}
-          <div className="space-y-4">
-            <h4 className="font-medium text-slate-900 dark:text-white border-b pb-2">Site Plan</h4>
-            <div className="space-y-3">
-              <label className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Site Plan Signed</span>
-                {isEditing ? (
-                  <input type="checkbox" checked={data.indenture_signed} onChange={(e) => setData({ ...data, site_plan_signed: e.target.checked })} className="rounded" />
-                ) : (
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${data.site_plan_signed ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"}`}>
-                    {data.indenture_signed ? "Yes" : "No"}
-                  </span>
-                )}
-              </label>
-              <div>
-                <p className="text-xs text-slate-500 mb-1">Date</p>
-                {isEditing ? <input type="date" value={data.site_plan_date} onChange={(e) => setData({ ...data, site_plan_date: e.target.value })} className="w-full px-3 py-2 rounded-lg border" /> : <p className="text-sm font-medium">{data.site_plan_date}</p>}
-              </div>
-            </div>
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+            <p className="text-xs text-slate-500 mb-1">Indenture Status</p>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${data.indenture_done ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"}`}>
+              {data.indenture_done ? "Complete" : "Pending"}
+            </span>
           </div>
 
-          {/* Indenture Section */}
-          <div className="space-y-4">
-            <h4 className="font-medium text-slate-900 dark:text-white border-b pb-2">Indenture</h4>
-            <div className="space-y-3">
-              <label className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Indenture Done</span>
-                {isEditing ? (
-                  <input type="checkbox" checked={data.indenture_done} onChange={(e) => setData({ ...data, indenture_done: e.target.checked })} className="rounded" />
-                ) : (
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${data.indenture_done ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"}`}>
-                    {data.indenture_done ? "Yes" : "No"}
-                  </span>
-                )}
-              </label>
-              <div>
-                <p className="text-xs text-slate-500 mb-1">Date</p>
-                {isEditing ? <input type="date" value={data.indenture_date} onChange={(e) => setData({ ...data, indenture_date: e.target.value })} className="w-full px-3 py-2 rounded-lg border" /> : <p className="text-sm font-medium">{data.indenture_date}</p>}
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 mb-1">Deponent Name</p>
-                {/* Removed deponent fields - now in client table */}
-              </div>
-            </div>
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+            <p className="text-xs text-slate-500 mb-1">Indenture Date</p>
+            {isEditing ? (
+              <input type="date" value={data.indenture_date} onChange={(e) => setData({ ...data, indenture_date: e.target.value })} className="w-full px-3 py-2 rounded-lg border" />
+            ) : (
+              <p className="text-sm font-medium">{data.indenture_date || "-"}</p>
+            )}
           </div>
+        </div>
+      </div>
 
-          {/* Signatures Section */}
-          <div className="space-y-4">
-            <h4 className="font-medium text-slate-900 dark:text-white border-b pb-2">Signatures</h4>
-            <div className="space-y-3">
-              <label className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Deponent Signed</span>
-                {isEditing ? (
-                  <input type="checkbox" checked={data.deponent_signed} onChange={(e) => setData({ ...data, deponent_signed: e.target.checked })} className="rounded" />
-                ) : (
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${data.deponent_signed ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"}`}>
-                    {data.deponent_signed ? "Yes" : "No"}
-                  </span>
-                )}
-              </label>
-              <label className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Boss Signed</span>
-                {isEditing ? (
-                  <input type="checkbox" checked={data.boss_signed} onChange={(e) => setData({ ...data, boss_signed: e.target.checked })} className="rounded" />
-                ) : (
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${data.boss_signed ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"}`}>
-                    {data.boss_signed ? "Yes" : "No"}
-                  </span>
-                )}
-              </label>
-              <label className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Court Signed</span>
-                {isEditing ? (
-                  <input type="checkbox" checked={data.court_signed} onChange={(e) => setData({ ...data, court_signed: e.target.checked })} className="rounded" />
-                ) : (
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${data.court_signed ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"}`}>
-                    {data.court_signed ? "Yes" : "No"}
-                  </span>
-                )}
-              </label>
-            </div>
+      <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
+        <h4 className="font-semibold text-slate-900 dark:text-white mb-4">Signature Status</h4>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl text-center">
+            <p className="text-xs text-slate-500 mb-2">Site Plan Signed</p>
+            {isEditing ? (
+              <input type="checkbox" checked={data.indenture_signed} onChange={(e) => setData({ ...data, indenture_signed: e.target.checked })} className="rounded w-5 h-5" />
+            ) : (
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${data.indenture_signed ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
+                {data.indenture_signed ? "Signed" : "Unsigned"}
+              </span>
+            )}
+          </div>
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl text-center">
+            <p className="text-xs text-slate-500 mb-2">Deponent Signed</p>
+            {isEditing ? (
+              <input type="checkbox" checked={data.deponent_signed} onChange={(e) => setData({ ...data, deponent_signed: e.target.checked })} className="rounded w-5 h-5" />
+            ) : (
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${data.deponent_signed ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
+                {data.deponent_signed ? "Signed" : "Unsigned"}
+              </span>
+            )}
+          </div>
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl text-center">
+            <p className="text-xs text-slate-500 mb-2">Boss Signed</p>
+            {isEditing ? (
+              <input type="checkbox" checked={data.boss_signed} onChange={(e) => setData({ ...data, boss_signed: e.target.checked })} className="rounded w-5 h-5" />
+            ) : (
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${data.boss_signed ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
+                {data.boss_signed ? "Signed" : "Unsigned"}
+              </span>
+            )}
+          </div>
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl text-center">
+            <p className="text-xs text-slate-500 mb-2">Court Signed</p>
+            {isEditing ? (
+              <input type="checkbox" checked={data.court_signed} onChange={(e) => setData({ ...data, court_signed: e.target.checked })} className="rounded w-5 h-5" />
+            ) : (
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${data.court_signed ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
+                {data.court_signed ? "Signed" : "Unsigned"}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -566,19 +553,69 @@ function IndentureTab({ data, isEditing, setData, onSave }: { data: any; isEditi
   );
 }
 
-function PlotsTab({ }: { }) {
+function PlotsTab({ sitePlanData, clientData }: { sitePlanData: any; clientData: any }) {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/20 rounded-xl flex items-center justify-center">
-          <Map className="w-6 h-6 text-purple-600" />
+    <div className="space-y-6">
+      <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/20 rounded-xl flex items-center justify-center">
+            <Map className="w-6 h-6 text-purple-600" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-slate-900 dark:text-white">Plot Information</h4>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Client's assigned plot details</p>
+          </div>
         </div>
-        <div>
-          <h4 className="font-semibold text-slate-900 dark:text-white">Plot Information</h4>
-          <p className="text-sm text-slate-500 dark:text-slate-400">This client's assigned plot</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+            <p className="text-xs text-slate-500 mb-1">Plot Number</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-white">{sitePlanData.plot_number || "-"}</p>
+          </div>
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+            <p className="text-xs text-slate-500 mb-1">Plot Size</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-white">{sitePlanData.plot_size ? `${sitePlanData.plot_size} acres` : "-"}</p>
+          </div>
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+            <p className="text-xs text-slate-500 mb-1">Location</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-white">{sitePlanData.plot_location || clientData.location || "-"}</p>
+          </div>
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+            <p className="text-xs text-slate-500 mb-1">Site Plan Status</p>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium inline-block ${sitePlanData.site_plan_done ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"}`}>
+              {sitePlanData.site_plan_done ? "Complete" : "Pending"}
+            </span>
+          </div>
         </div>
       </div>
-      <p className="text-center text-slate-400 py-8">Plot details are shown in the Site Plan tab</p>
+      <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
+        <h4 className="font-semibold text-slate-900 dark:text-white mb-4">Signature Status</h4>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl text-center">
+            <p className="text-xs text-slate-500 mb-2">Site Plan</p>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${sitePlanData.site_plan_signed ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
+              {sitePlanData.site_plan_signed ? "Signed" : "Unsigned"}
+            </span>
+          </div>
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl text-center">
+            <p className="text-xs text-slate-500 mb-2">Indenture</p>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${sitePlanData.indenture_signed ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
+              {sitePlanData.indenture_signed ? "Signed" : "Unsigned"}
+            </span>
+          </div>
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl text-center">
+            <p className="text-xs text-slate-500 mb-2">Boss</p>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${sitePlanData.boss_signed ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
+              {sitePlanData.boss_signed ? "Signed" : "Unsigned"}
+            </span>
+          </div>
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl text-center">
+            <p className="text-xs text-slate-500 mb-2">Court</p>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${sitePlanData.court_signed ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
+              {sitePlanData.court_signed ? "Signed" : "Unsigned"}
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
