@@ -8,9 +8,6 @@ import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, CheckCircle, Menu, X, Moon, S
 import toast from "react-hot-toast";
 import { useTheme } from "next-themes";
 
-const API_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const API_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
 export default function SignupPage() {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
@@ -33,35 +30,17 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      // Check if email exists
-      const checkRes = await fetch(`${API_URL}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=id`, {
-        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
-      });
-      const existing = await checkRes.json();
-      
-      if (existing.length > 0) {
-        throw new Error("Email already registered");
-      }
-
-      // Create user
-      const res = await fetch(`${API_URL}/rest/v1/users`, {
+      const res = await fetch('/api/auth/signup', {
         method: 'POST',
-        headers: {
-          'apikey': API_KEY,
-          'Authorization': `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          full_name: fullName,
-          role: 'pending',
-          approved: false
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, full_name: fullName })
       });
 
-      if (!res.ok) throw new Error("Failed to create account");
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to create account");
+      }
 
       setIsSuccess(true);
       toast.success("Account created! Pending approval.");

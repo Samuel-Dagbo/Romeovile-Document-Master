@@ -10,6 +10,7 @@ import {
   User,
   FileText,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface Client {
   id: string;
@@ -23,9 +24,6 @@ interface Client {
   status: string;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const API_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
 export default function PlotsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [clients, setClients] = useState<Client[]>([]);
@@ -37,13 +35,13 @@ export default function PlotsPage() {
 
   const fetchClients = async () => {
     try {
-      const res = await fetch(`${API_URL}/rest/v1/clients?select=id,full_name,file_number,plot_number,plot_size,plot_location,site_plan_done,site_plan_signed,status&plot_number=not.is.null`, {
-        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
-      });
+      const res = await fetch('/api/clients');
       const data = await res.json();
-      setClients(Array.isArray(data) ? data : []);
+      const clientsWithPlots = (Array.isArray(data) ? data : []).filter((c: Client) => c.plot_number);
+      setClients(clientsWithPlots);
     } catch (error) {
-      console.error('Error fetching clients:', error);
+      console.error('Error fetching plots:', error);
+      toast.error("Failed to load plots");
       setClients([]);
     } finally {
       setLoading(false);

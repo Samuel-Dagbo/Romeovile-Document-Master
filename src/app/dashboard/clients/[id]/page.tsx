@@ -10,9 +10,6 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-const API_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const API_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
 const tabs = [
   { id: "overview", label: "Overview", icon: FileText },
   { id: "siteplan", label: "Site Plan", icon: Map },
@@ -99,10 +96,7 @@ export default function ClientProfilePage({ params }: { params: Promise<{ id: st
 
   const fetchClient = async () => {
     try {
-      const res = await fetch(`${API_URL}/rest/v1/clients?id=eq.${resolvedParams.id}&select=*`, {
-        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
-      });
-      if (!res.ok) throw new Error('Failed to fetch client');
+      const res = await fetch(`/api/clients?id=eq.${resolvedParams.id}`);
       const data = await res.json();
       if (data && data.length > 0) {
         const client = data[0];
@@ -131,9 +125,9 @@ export default function ClientProfilePage({ params }: { params: Promise<{ id: st
 
   const handleSave = async () => {
     try {
-      const res = await fetch(`${API_URL}/rest/v1/clients?id=eq.${resolvedParams.id}`, {
+      const res = await fetch(`/api/clients?id=${resolvedParams.id}`, {
         method: 'PATCH',
-        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           full_name: editData.full_name,
           phone: editData.phone,
@@ -153,11 +147,7 @@ export default function ClientProfilePage({ params }: { params: Promise<{ id: st
           court_signed: indentureData.court_signed
         })
       });
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error('Save error:', res.status, errorText);
-        throw new Error(`Failed to save: ${res.status}`);
-      }
+      if (!res.ok) throw new Error('Failed to save');
       setIsEditing(false);
       toast.success("Client information updated successfully!");
       fetchClient();
@@ -169,9 +159,9 @@ export default function ClientProfilePage({ params }: { params: Promise<{ id: st
 
   const handleSitePlanSave = async () => {
     try {
-      const res = await fetch(`${API_URL}/rest/v1/clients?id=eq.${resolvedParams.id}`, {
+      const res = await fetch(`/api/clients?id=${resolvedParams.id}`, {
         method: 'PATCH',
-        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plot_number: sitePlanData.plot_number,
           plot_size: sitePlanData.plot_size ? parseFloat(sitePlanData.plot_size) : null,
@@ -180,11 +170,7 @@ export default function ClientProfilePage({ params }: { params: Promise<{ id: st
           site_plan_signed: sitePlanData.site_plan_signed
         })
       });
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error('Save error:', res.status, errorText);
-        throw new Error(`Failed to save: ${res.status}`);
-      }
+      if (!res.ok) throw new Error('Failed to save');
       toast.success("Site plan info saved!");
       fetchClient();
     } catch (error) {
@@ -195,9 +181,9 @@ export default function ClientProfilePage({ params }: { params: Promise<{ id: st
 
   const handleIndentureSave = async () => {
     try {
-      const res = await fetch(`${API_URL}/rest/v1/clients?id=eq.${resolvedParams.id}`, {
+      const res = await fetch(`/api/clients?id=${resolvedParams.id}`, {
         method: 'PATCH',
-        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           number_of_indentures: indentureData.number_of_indentures,
           indenture_done: indentureData.indenture_done,
@@ -208,11 +194,7 @@ export default function ClientProfilePage({ params }: { params: Promise<{ id: st
           court_signed: indentureData.court_signed
         })
       });
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error('Save error:', res.status, errorText);
-        throw new Error(`Failed to save: ${res.status}`);
-      }
+      if (!res.ok) throw new Error('Failed to save');
       toast.success("Indenture info saved!");
       fetchClient();
     } catch (error) {

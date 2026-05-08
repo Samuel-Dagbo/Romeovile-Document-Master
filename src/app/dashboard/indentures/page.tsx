@@ -14,6 +14,7 @@ import {
   FileText,
   ScrollText,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface Client {
   id: string;
@@ -29,9 +30,6 @@ interface Client {
   court_signed: boolean;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const API_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
 export default function IndenturesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [clients, setClients] = useState<Client[]>([]);
@@ -43,15 +41,12 @@ export default function IndenturesPage() {
 
   const fetchClients = async () => {
     try {
-      // Get all clients - show all
-      const res = await fetch(`${API_URL}/rest/v1/clients?select=id,full_name,file_number,plot_number,plot_size,number_of_indentures,indenture_done,indenture_date,indenture_signed,boss_signed,court_signed`, {
-        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
-      });
+      const res = await fetch('/api/clients');
       const data = await res.json();
-      console.log('Clients data:', data);
       setClients(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching clients:', error);
+      toast.error("Failed to load indentures");
       setClients([]);
     } finally {
       setLoading(false);

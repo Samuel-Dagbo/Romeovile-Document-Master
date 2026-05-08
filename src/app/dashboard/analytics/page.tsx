@@ -26,9 +26,6 @@ import {
   BarChart as RechartsBarChart,
 } from "recharts";
 
-const API_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const API_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
 const monthlyData = [
   { month: "Jan", clients: 45, revenue: 180000 },
   { month: "Feb", clients: 62, revenue: 220000 },
@@ -60,9 +57,7 @@ export default function AnalyticsPage() {
 
   const fetchData = async () => {
     try {
-      const res = await fetch(`${API_URL}/rest/v1/clients?select=*`, {
-        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
-      });
+      const res = await fetch('/api/clients');
       const data = await res.json();
       const clientList = Array.isArray(data) ? data : [];
       setClients(clientList);

@@ -8,67 +8,20 @@ import {
   Users,
   Map,
   FileText,
-  CheckCircle2,
   Menu,
   X,
   Moon,
   Sun,
   Building2,
   DollarSign,
-  TrendingUp,
   Shield,
   Zap,
-  Globe,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-
-const API_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const API_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 export default function HomePage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
-  const [stats, setStats] = useState({
-    totalClients: 0,
-    activeClients: 0,
-    totalPlots: 0,
-    totalLocations: 0
-  });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
-    try {
-      const [clientsRes, locationsRes] = await Promise.all([
-        fetch(`${API_URL}/rest/v1/clients?select=id,status,plot_number`, {
-          headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
-        }),
-        fetch(`${API_URL}/rest/v1/locations?select=id`, {
-          headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
-        })
-      ]);
-      
-      const clients = await clientsRes.json();
-      const locations = await locationsRes.json();
-      
-      const clientList = Array.isArray(clients) ? clients : [];
-      const locationList = Array.isArray(locations) ? locations : [];
-      
-      setStats({
-        totalClients: clientList.length,
-        activeClients: clientList.filter((c: any) => c.status === 'active').length,
-        totalPlots: clientList.filter((c: any) => c.plot_number).length,
-        totalLocations: locationList.length
-      });
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-900">
@@ -125,8 +78,31 @@ export default function HomePage() {
         )}
       </nav>
 
+      {/* Stats Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">Trusted by Industry Leaders</h2>
+            <p className="text-blue-100">Join the leading land management platform in Ghana</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { number: "500+", label: "Clients Managed" },
+              { number: "50+", label: "Locations Covered" },
+              { number: "98%", label: "Satisfaction Rate" },
+              { number: "24/7", label: "Support Available" },
+            ].map((stat) => (
+              <div key={stat.label} className="text-center">
+                <p className="text-3xl sm:text-4xl font-bold text-white">{stat.number}</p>
+                <p className="text-blue-100 text-sm mt-1">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Hero Section */}
-      <section className="pt-32 pb-16 px-4 sm:px-6 lg:px-8">
+      <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -164,37 +140,65 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Live Stats Section */}
+      {/* Why Choose RomeoVille Section */}
       <section id="stats" className="py-16 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-slate-800/50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Live System Statistics</h2>
-            <p className="text-muted-foreground text-lg">Real-time data from our platform</p>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Why Choose RomeoVille?</h2>
+            <p className="text-muted-foreground text-lg">The complete solution for modern land management</p>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { label: "Total Clients", value: stats.totalClients, icon: Users, color: "from-blue-500 to-blue-600", bg: "bg-blue-50 dark:bg-blue-900/20" },
-              { label: "Active Clients", value: stats.activeClients, icon: CheckCircle2, color: "from-emerald-500 to-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
-              { label: "Plots Assigned", value: stats.totalPlots, icon: Map, color: "from-purple-500 to-purple-600", bg: "bg-purple-50 dark:bg-purple-900/20" },
-              { label: "Locations", value: stats.totalLocations, icon: Building2, color: "from-amber-500 to-amber-600", bg: "bg-amber-50 dark:bg-amber-900/20" },
-            ].map((stat, index) => (
+              { 
+                title: "Comprehensive Client Management", 
+                desc: "Keep all your client information organized in one place. Track contact details, payment history, and plot assignments effortlessly.",
+                icon: Users,
+                color: "blue"
+              },
+              { 
+                title: "Digital Indenture Tracking", 
+                desc: "Never lose track of legal documents again. Monitor every signature status from site plan to court approval in real-time.",
+                icon: FileText,
+                color: "emerald"
+              },
+              { 
+                title: "Smart Plot Assignment", 
+                desc: "Assign and track plots with ease. Know exactly what's available, what's sold, and the status of each plot.",
+                icon: Map,
+                color: "purple"
+              },
+              { 
+                title: "Secure User Management", 
+                desc: "Control who has access to what. Set up different roles for admins, staff, and managers with approval workflows.",
+                icon: Shield,
+                color: "indigo"
+              },
+              { 
+                title: "Payment Tracking", 
+                desc: "Keep track of all payments and outstanding balances. Know exactly where each client stands with their payments.",
+                icon: DollarSign,
+                color: "amber"
+              },
+              { 
+                title: "Multiple Locations", 
+                desc: "Manage plots across different areas and municipalities. Perfect for operations spanning multiple regions.",
+                icon: Building2,
+                color: "rose"
+              },
+            ].map((item, index) => (
               <motion.div
-                key={stat.label}
+                key={item.title}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
                 className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-lg border border-slate-100 dark:border-slate-800"
               >
-                <div className="flex items-center gap-4 mb-4">
-                  <div className={`w-12 h-12 ${stat.bg} rounded-xl flex items-center justify-center`}>
-                    <stat.icon className={`w-6 h-6 bg-gradient-to-br ${stat.color} rounded-lg text-white`} />
-                  </div>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 bg-${item.color}-50 dark:bg-${item.color}-900/20`}>
+                  <item.icon className={`w-6 h-6 text-${item.color}-600`} />
                 </div>
-                <p className="text-3xl font-bold mb-1">
-                  {loading ? '-' : stat.value.toLocaleString()}
-                </p>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
+                <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
+                <p className="text-muted-foreground text-sm">{item.desc}</p>
               </motion.div>
             ))}
           </div>

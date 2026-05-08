@@ -37,23 +37,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    const API_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    
     try {
-      const res = await fetch(`${API_URL}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=*`, {
-        headers: {
-          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
-        }
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
       });
       
-      const users = await res.json();
+      if (!res.ok) return false;
       
-      if (!users || users.length === 0) return false;
-      
-      const userData = users[0];
-      
-      if (userData.password !== password) return false;
+      const userData = await res.json();
       
       // Store in localStorage
       localStorage.setItem('user', JSON.stringify(userData));

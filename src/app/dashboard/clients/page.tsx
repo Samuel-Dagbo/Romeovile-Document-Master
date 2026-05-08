@@ -28,23 +28,19 @@ export default function ClientsPage() {
   const [loading, setLoading] = useState(true);
   const searchRef = useRef<HTMLDivElement>(null);
   
-  const API_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const API_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
   useEffect(() => {
     fetchClients();
   }, []);
 
   const fetchClients = async () => {
     try {
-      const res = await fetch(`${API_URL}/rest/v1/clients?select=*&order=created_at.desc`, {
-        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
-      });
+      const res = await fetch('/api/clients?order=created_at.desc');
       if (!res.ok) throw new Error('Failed to fetch');
       const data = await res.json();
       setClients(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching clients:', error);
+      toast.error("Failed to load clients");
     } finally {
       setLoading(false);
     }
@@ -523,14 +519,10 @@ export default function ClientsPage() {
                       return;
                     }
                     
-                    const API_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-                    const API_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-                    
                     try {
-                      // Create client with site plan details
-                      const clientRes = await fetch(`${API_URL}/rest/v1/clients`, {
+                      const res = await fetch('/api/clients', {
                         method: 'POST',
-                        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                           full_name: newClient.full_name,
                           phone: newClient.phone,
@@ -548,31 +540,12 @@ export default function ClientsPage() {
                         })
                       });
                       
-                      if (!clientRes.ok) throw new Error('Failed to create client');
-                      
-                      // Get the new client ID from location header
-                      const clientId = clientRes.headers.get('location')?.split('/').pop();
-                      
-                      // Also create a plot record if site plan details provided (for backward compatibility)
-                      if (newClient.plot_number || newClient.plot_size) {
-                        await fetch(`${API_URL}/rest/v1/plots`, {
-                          method: 'POST',
-                          headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-                          body: JSON.stringify({
-                            client_id: clientId,
-                            plot_number: newClient.plot_number || `PL-${Date.now().toString().slice(-4)}`,
-                            acreage: parseFloat(newClient.plot_size) || null,
-                            site_plan_done: newClient.site_plan,
-                            site_plan_signed: newClient.site_plan_signed,
-                            status: 'sold',
-                            plot_picked: true
-                          })
-                        });
-                      }
+                      if (!res.ok) throw new Error('Failed to create client');
                       
                       toast.success("Client created successfully!");
                       setShowAddModal(false);
                       setNewClient({ full_name: "", phone: "", email: "", address: "", location: "", total_amount: "", plot_number: "", plot_size: "", site_plan: false, site_plan_signed: false });
+                      fetchClients();
                     } catch (error) {
                       console.error('Error creating client:', error);
                       toast.error("Failed to create client");
