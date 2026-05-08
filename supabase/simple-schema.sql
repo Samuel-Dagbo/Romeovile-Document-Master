@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS locations (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Clients table
+-- Clients table (all-in-one with plot & indenture info)
 CREATE TABLE IF NOT EXISTS clients (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   file_number TEXT UNIQUE,
@@ -31,25 +31,20 @@ CREATE TABLE IF NOT EXISTS clients (
   balance DECIMAL DEFAULT 0,
   status TEXT DEFAULT 'active',
   profile_image_url TEXT,
+  -- Plot info
   plot_number TEXT,
   plot_size DECIMAL,
+  plot_location TEXT,
   site_plan_done BOOLEAN DEFAULT false,
   site_plan_signed BOOLEAN DEFAULT false,
+  -- Indenture info
+  number_of_indentures INTEGER DEFAULT 1,
+  indenture_done BOOLEAN DEFAULT false,
+  indenture_date DATE,
+  indenture_signed BOOLEAN DEFAULT false,
+  boss_signed BOOLEAN DEFAULT false,
+  court_signed BOOLEAN DEFAULT false,
   created_by UUID REFERENCES users(id),
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Plots table
-CREATE TABLE IF NOT EXISTS plots (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
-  locality_id UUID REFERENCES locations(id),
-  plot_number TEXT,
-  acreage DECIMAL,
-  status TEXT DEFAULT 'available',
-  plot_picked BOOLEAN DEFAULT false,
-  site_plan_done BOOLEAN DEFAULT false,
-  site_plan_signed BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -86,29 +81,10 @@ CREATE TABLE IF NOT EXISTS payments (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Indentures table
-CREATE TABLE IF NOT EXISTS indentures (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
-  number_of_indentures INTEGER DEFAULT 1,
-  site_plan_signed BOOLEAN DEFAULT false,
-  site_plan_date DATE,
-  indenture_done BOOLEAN DEFAULT false,
-  indenture_date DATE,
-  deponent_name TEXT,
-  deponent_signed BOOLEAN DEFAULT false,
-  boss_signed BOOLEAN DEFAULT false,
-  court_signed BOOLEAN DEFAULT false,
-  notes TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
 -- Enable RLS
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE locations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
-ALTER TABLE plots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
@@ -117,11 +93,9 @@ ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow all" ON users FOR ALL USING (true);
 CREATE POLICY "Allow all locations" ON locations FOR ALL USING (true);
 CREATE POLICY "Allow all clients" ON clients FOR ALL USING (true);
-CREATE POLICY "Allow all plots" ON plots FOR ALL USING (true);
 CREATE POLICY "Allow all documents" ON documents FOR ALL USING (true);
 CREATE POLICY "Allow all logs" ON activity_logs FOR ALL USING (true);
 CREATE POLICY "Allow all payments" ON payments FOR ALL USING (true);
-CREATE POLICY "Allow all indentures" ON indentures FOR ALL USING (true);
 
 -- Seed locations
 INSERT INTO locations (name, code, description) VALUES
