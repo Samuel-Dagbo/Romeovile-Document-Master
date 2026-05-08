@@ -60,7 +60,7 @@ export default function LoginPage() {
               <label className="text-sm font-medium">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-10 pr-4 py-3 rounded-xl border bg-white/50 dark:bg-slate-800/50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="admin@romeoville.com" required />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-10 pr-4 py-3 rounded-xl border bg-white/50 dark:bg-slate-800/50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="you@company.com" required />
               </div>
             </div>
 
@@ -79,10 +79,6 @@ export default function LoginPage() {
               {isLoading ? "Signing in..." : "Sign in"}
             </button>
           </form>
-
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Demo: <strong>admin@romeoville.com</strong> / <strong>admin123</strong>
-          </p>
         </div>
       </motion.div>
     </div>

@@ -81,6 +81,24 @@ CREATE TABLE IF NOT EXISTS payments (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Indentures table
+CREATE TABLE IF NOT EXISTS indentures (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
+  number_of_indentures INTEGER DEFAULT 1,
+  site_plan_signed BOOLEAN DEFAULT false,
+  site_plan_date DATE,
+  indenture_done BOOLEAN DEFAULT false,
+  indenture_date DATE,
+  deponent_name TEXT,
+  deponent_signed BOOLEAN DEFAULT false,
+  boss_signed BOOLEAN DEFAULT false,
+  court_signed BOOLEAN DEFAULT false,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Enable RLS
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE locations ENABLE ROW LEVEL SECURITY;
@@ -98,6 +116,7 @@ CREATE POLICY "Allow all plots" ON plots FOR ALL USING (true);
 CREATE POLICY "Allow all documents" ON documents FOR ALL USING (true);
 CREATE POLICY "Allow all logs" ON activity_logs FOR ALL USING (true);
 CREATE POLICY "Allow all payments" ON payments FOR ALL USING (true);
+CREATE POLICY "Allow all indentures" ON indentures FOR ALL USING (true);
 
 -- Seed locations
 INSERT INTO locations (name, code, description) VALUES
@@ -109,10 +128,10 @@ INSERT INTO locations (name, code, description) VALUES
 ('Prestea', 'PST', 'Prestea area')
 ON CONFLICT (code) DO NOTHING;
 
--- Seed demo admin user (password: admin123)
-INSERT INTO users (email, password, full_name, role, approved) VALUES
-('admin@romeoville.com', 'admin123', 'System Admin', 'admin', true)
-ON CONFLICT (email) DO NOTHING;
+-- Seed demo admin user (create via UI signup, then set role to admin manually)
+-- INSERT INTO users (email, password, full_name, role, approved) VALUES
+-- ('admin@romeoville.com', 'YOUR_STRONG_PASSWORD_HERE', 'System Admin', 'admin', true)
+-- ON CONFLICT (email) DO NOTHING;
 
 -- Seed demo clients
 INSERT INTO clients (file_number, full_name, phone, email, address, signup_date, total_amount, balance, status) VALUES

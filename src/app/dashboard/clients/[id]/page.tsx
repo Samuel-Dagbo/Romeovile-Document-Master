@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -10,10 +10,14 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
+const API_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const API_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
 const tabs = [
   { id: "overview", label: "Overview", icon: FileText },
+  { id: "siteplan", label: "Site Plan", icon: Map },
   { id: "indenture", label: "Indenture", icon: ScrollText },
-  { id: "plots", label: "Plots", icon: Map },
+  { id: "plots", label: "Plots", icon: Building2 },
   { id: "documents", label: "Documents", icon: FileText },
   { id: "payments", label: "Payments", icon: CreditCard },
   { id: "activity", label: "Activity", icon: Activity },
@@ -33,23 +37,29 @@ const clientData = {
   location: "Obuasi Municipal",
 };
 
-const indentureData = {
-  id: "1",
-  number_of_indentures: 2,
-  site_plan_signed: true,
-  site_plan_date: "2026-01-20",
-  indenture_done: true,
-  indenture_date: "2026-02-15",
-  deponent_name: "John Smith",
-  deponent_signed: true,
-  boss_signed: true,
-  court_signed: true,
+const defaultIndenture = {
+  id: "",
+  number_of_indentures: 1,
+  site_plan_signed: false,
+  site_plan_date: "",
+  indenture_done: false,
+  indenture_date: "",
+  deponent_name: "",
+  deponent_signed: false,
+  boss_signed: false,
+  court_signed: false,
 };
 
-const plots = [
-  { id: "1", plot_number: "PL-001", number: "PL-001", acreage: 2.5, status: "sold", location: "Obuasi Municipal", picked: true, sitePlan: true },
-  { id: "2", plot_number: "PL-002", number: "PL-002", acreage: 1.8, status: "sold", location: "Obuasi Municipal", picked: true, sitePlan: false },
-];
+interface Plot {
+  id: string;
+  plot_number: string;
+  acreage: number;
+  status: string;
+  locality_id: string;
+  plot_picked: boolean;
+  site_plan_done: boolean;
+  location_name?: string;
+}
 
 const documents = [
   { id: "1", title: "Land Agreement", type: "agreement", date: "2026-01-20", size: "2.4 MB" },
@@ -73,16 +83,84 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(clientData);
-  const [indentureEdit, setIndentureEdit] = useState(indentureData);
+  const [indentureData, setIndentureData] = useState(defaultIndenture);
+  const [plots, setPlots] = useState<Plot[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchIndenture();
+    fetchPlots();
+  }, [params.id]);
+
+  const fetchPlots = async () => {
+    try {
+      const res = await fetch(`${API_URL}/rest/v1/plots?client_id=eq.${params.id}&select=*,locations(name)`, {
+        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
+      });
+      const data = await res.json();
+      setPlots(data || []);
+    } catch (error) {
+      console.error('Error fetching plots:', error);
+    }
+  };
+
+  const fetchIndenture = async () => {
+    try {
+      const res = await fetch(`${API_URL}/rest/v1/indentures?client_id=eq.${params.id}&select=*`, {
+        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
+      });
+      const data = await res.json();
+      if (data && data.length > 0) {
+        setIndentureData(data[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching indenture:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSave = () => {
     setIsEditing(false);
     toast.success("Client information updated successfully!");
   };
 
-  const handleIndentureSave = () => {
-    setIsEditing(false);
-    toast.success("Indenture information saved!");
+  const handleIndentureSave = async () => {
+    try {
+      if (indentureData.id) {
+        await fetch(`${API_URL}/rest/v1/indentures?id=eq.${indentureData.id}`, {
+          method: 'PATCH',
+          headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            number_of_indentures: indentureData.number_of_indentures,
+            site_plan_signed: indentureData.site_plan_signed,
+            site_plan_date: indentureData.site_plan_date,
+            indenture_done: indentureData.indenture_done,
+            indenture_date: indentureData.indenture_date,
+            deponent_name: indentureData.deponent_name,
+            deponent_signed: indentureData.deponent_signed,
+            boss_signed: indentureData.boss_signed,
+            court_signed: indentureData.court_signed,
+            updated_at: new Date().toISOString()
+          })
+        });
+      } else {
+        const res = await fetch(`${API_URL}/rest/v1/indentures`, {
+          method: 'POST',
+          headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            client_id: params.id,
+            ...indentureData
+          })
+        });
+        const newIndenture = await res.json();
+        setIndentureData({ ...indentureData, id: newIndenture.id });
+      }
+      setIsEditing(false);
+      toast.success("Indenture information saved!");
+    } catch (error) {
+      toast.error("Failed to save indenture");
+    }
   };
 
   return (
@@ -200,8 +278,9 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
       </div>
 
       <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        {activeTab === "overview" && <OverviewTab />}
-        {activeTab === "indenture" && <IndentureTab data={indentureData} isEditing={isEditing} setData={setIndentureEdit} onSave={handleIndentureSave} />}
+        {activeTab === "overview" && <OverviewTab indenture={indentureData} />}
+        {activeTab === "siteplan" && <SitePlanTab plots={plots} isEditing={isEditing} setPlots={setPlots} clientId={params.id} />}
+        {activeTab === "indenture" && <IndentureTab data={indentureData} isEditing={isEditing} setData={setIndentureData} onSave={handleIndentureSave} />}
         {activeTab === "plots" && <PlotsTab plots={plots} />}
         {activeTab === "documents" && <DocumentsTab documents={documents} />}
         {activeTab === "payments" && <PaymentsTab payments={payments} />}
@@ -211,7 +290,7 @@ export default function ClientProfilePage({ params }: { params: { id: string } }
   );
 }
 
-function OverviewTab() {
+function OverviewTab({ indenture }: { indenture: typeof defaultIndenture }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
@@ -225,17 +304,166 @@ function OverviewTab() {
           ))}
         </div>
       </div>
-      <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
-        <h3 className="text-lg font-semibold mb-4">Payment Progress</h3>
-        <div className="space-y-4">
-          <div><div className="flex justify-between mb-2"><span className="text-sm text-slate-500">Paid vs Total</span><span className="text-sm font-semibold">66.7%</span></div>
-            <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full"><div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full" style={{ width: "66.7%" }} /></div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl"><p className="text-xs text-emerald-600">Paid</p><p className="text-lg font-bold text-emerald-600">₵100,000</p></div>
-            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl"><p className="text-xs text-amber-600">Outstanding</p><p className="text-lg font-bold text-amber-600">₵50,000</p></div>
+      <div className="space-y-6">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
+          <h3 className="text-lg font-semibold mb-4">Payment Progress</h3>
+          <div className="space-y-4">
+            <div><div className="flex justify-between mb-2"><span className="text-sm text-slate-500">Paid vs Total</span><span className="text-sm font-semibold">66.7%</span></div>
+              <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full"><div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full" style={{ width: "66.7%" }} /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl"><p className="text-xs text-emerald-600">Paid</p><p className="text-lg font-bold text-emerald-600">₵100,000</p></div>
+              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl"><p className="text-xs text-amber-600">Outstanding</p><p className="text-lg font-bold text-amber-600">₵50,000</p></div>
+            </div>
           </div>
         </div>
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-2 mb-4">
+            <ScrollText className="w-5 h-5 text-emerald-600" />
+            <h3 className="text-lg font-semibold">Indenture Summary</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+              <p className="text-xs text-slate-500">Number of Indentures</p>
+              <p className="text-lg font-bold">{indenture.number_of_indentures || 0}</p>
+            </div>
+            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+              <p className="text-xs text-slate-500">Site Plan</p>
+              <span className={`text-sm font-medium ${indenture.site_plan_signed ? 'text-emerald-600' : 'text-amber-600'}`}>
+                {indenture.site_plan_signed ? 'Signed' : 'Not Signed'}
+              </span>
+            </div>
+            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+              <p className="text-xs text-slate-500">Indenture</p>
+              <span className={`text-sm font-medium ${indenture.indenture_done ? 'text-emerald-600' : 'text-amber-600'}`}>
+                {indenture.indenture_done ? 'Done' : 'Pending'}
+              </span>
+            </div>
+            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+              <p className="text-xs text-slate-500">Deponent</p>
+              <span className={`text-sm font-medium ${indenture.deponent_signed ? 'text-emerald-600' : 'text-amber-600'}`}>
+                {indenture.deponent_signed ? 'Signed' : 'Not Signed'}
+              </span>
+            </div>
+            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+              <p className="text-xs text-slate-500">Boss Signed</p>
+              <span className={`text-sm font-medium ${indenture.boss_signed ? 'text-emerald-600' : 'text-amber-600'}`}>
+                {indenture.boss_signed ? 'Yes' : 'No'}
+              </span>
+            </div>
+            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+              <p className="text-xs text-slate-500">Court Signed</p>
+              <span className={`text-sm font-medium ${indenture.court_signed ? 'text-emerald-600' : 'text-amber-600'}`}>
+                {indenture.court_signed ? 'Yes' : 'No'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SitePlanTab({ plots, isEditing, setPlots, clientId }: { plots: Plot[]; isEditing: boolean; setPlots: any; clientId: string }) {
+  const handlePlotChange = async (plotId: string, field: string, value: any) => {
+    const updatedPlots = plots.map(p => p.id === plotId ? { ...p, [field]: value } : p);
+    setPlots(updatedPlots);
+
+    if (isEditing) {
+      try {
+        await fetch(`${API_URL}/rest/v1/plots?id=eq.${plotId}`, {
+          method: 'PATCH',
+          headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [field]: value })
+        });
+      } catch (error) {
+        console.error('Error updating plot:', error);
+      }
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold">Site Plan Information</h3>
+        </div>
+
+        {plots.length === 0 ? (
+          <div className="text-center py-8">
+            <Map className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <p className="text-slate-500">No plots assigned yet</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {plots.map((plot, index) => (
+              <div key={plot.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                    <span className="text-purple-600 font-medium">{index + 1}</span>
+                  </div>
+                  <h4 className="font-semibold">Plot {index + 1}</h4>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Site Plan</p>
+                    {isEditing ? (
+                      <select
+                        value={plot.site_plan_done ? "true" : "false"}
+                        onChange={(e) => handlePlotChange(plot.id, 'site_plan_done', e.target.value === "true")}
+                        className="w-full px-3 py-2 rounded-lg border text-sm"
+                      >
+                        <option value="true">Yes</option>
+                        <option value="false">No</option>
+                      </select>
+                    ) : (
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${plot.site_plan_done ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"}`}>
+                        {plot.site_plan_done ? "Yes" : "No"}
+                      </span>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Plot No</p>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={plot.plot_number || ""}
+                        onChange={(e) => handlePlotChange(plot.id, 'plot_number', e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border text-sm"
+                        placeholder="PL-001"
+                      />
+                    ) : (
+                      <p className="text-sm font-medium">{plot.plot_number || "-"}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Plot Size (acres)</p>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={plot.acreage || ""}
+                        onChange={(e) => handlePlotChange(plot.id, 'acreage', parseFloat(e.target.value))}
+                        className="w-full px-3 py-2 rounded-lg border text-sm"
+                        placeholder="2.5"
+                      />
+                    ) : (
+                      <p className="text-sm font-medium">{plot.acreage ? `${plot.acreage} acres` : "-"}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Location</p>
+                    <p className="text-sm font-medium">{plot.location_name || "Obuasi Municipal"}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -251,6 +479,21 @@ function IndentureTab({ data, isEditing, setData, onSave }: { data: any; isEditi
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Number of Indentures */}
+          <div className="space-y-4">
+            <h4 className="font-medium text-slate-900 dark:text-white border-b pb-2">Details</h4>
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Number of Indentures</p>
+                {isEditing ? (
+                  <input type="number" value={data.number_of_indentures} onChange={(e) => setData({ ...data, number_of_indentures: parseInt(e.target.value) || 1 })} className="w-full px-3 py-2 rounded-lg border" min="1" />
+                ) : (
+                  <p className="text-sm font-medium">{data.number_of_indentures || 1}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Site Plan Section */}
           <div className="space-y-4">
             <h4 className="font-medium text-slate-900 dark:text-white border-b pb-2">Site Plan</h4>
