@@ -9,8 +9,6 @@ const clientSchema = z.object({
   email: z.any().optional(),
   address: z.any().optional(),
   location: z.any().optional(),
-  total_amount: z.any().optional(),
-  balance: z.any().optional(),
   file_number: z.any().optional(),
   status: z.any().optional(),
   signup_date: z.any().optional(),
