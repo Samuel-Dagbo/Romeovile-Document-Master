@@ -133,35 +133,40 @@ export default function ClientProfilePage() {
 
   const handleSave = async () => {
     try {
+      const payload = {
+        full_name: editData.full_name,
+        phone: editData.phone,
+        email: editData.email,
+        address: editData.address,
+        signup_date: editData.signup_date || null,
+        plot_number: editData.plot_number || null,
+        plot_size: editData.plot_size ? parseFloat(editData.plot_size) : null,
+        plot_location: editData.plot_location || null,
+        site_plan_done: editData.site_plan_done || false,
+        site_plan_signed: editData.site_plan_signed || false,
+        number_of_indentures: editData.number_of_indentures || 1,
+        indenture_done: editData.indenture_done || false,
+        indenture_date: editData.indenture_date || null,
+        indenture_signed: editData.indenture_signed || false,
+        deponent_signed: editData.deponent_signed || false,
+        deponent_name: editData.deponent_name || null,
+        client_witness_name: editData.client_witness_name || null,
+        boss_signed: editData.boss_signed || false,
+        court_signed: editData.court_signed || false
+      };
+      
+      console.log('Saving with payload:', payload);
+      
       const res = await fetch(`/api/clients?id=${clientId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          full_name: editData.full_name,
-          phone: editData.phone,
-          email: editData.email,
-          address: editData.address,
-          signup_date: editData.signup_date || null,
-          plot_number: editData.plot_number,
-          plot_size: editData.plot_size ? parseFloat(editData.plot_size) : null,
-          plot_location: editData.plot_location,
-          site_plan_done: editData.site_plan_done,
-          site_plan_signed: editData.site_plan_signed,
-          number_of_indentures: editData.number_of_indentures,
-          indenture_done: editData.indenture_done,
-          indenture_date: editData.indenture_date || null,
-          indenture_signed: editData.indenture_signed,
-          deponent_signed: editData.deponent_signed,
-          deponent_name: editData.deponent_name || null,
-          client_witness_name: editData.client_witness_name || null,
-          boss_signed: editData.boss_signed,
-          court_signed: editData.court_signed
-        })
+        body: JSON.stringify(payload)
       });
       
       const data = await res.json();
+      console.log('Save response:', res.status, data);
+      
       if (!res.ok) {
-        console.error('Save error:', data);
         const errorMsg = data.error + (data.details ? `: ${data.details}` : '')
         throw new Error(errorMsg || 'Failed to save');
       }
