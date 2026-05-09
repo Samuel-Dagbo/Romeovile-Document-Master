@@ -302,12 +302,31 @@ export default function ClientsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <Link 
-                        href={`/dashboard/clients/${client.id}`}
-                        className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                      >
-                        View
-                      </Link>
+                      <div className="flex items-center justify-end gap-3">
+                        <Link 
+                          href={`/dashboard/clients/${client.id}`}
+                          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                          View
+                        </Link>
+                        <button
+                          onClick={async () => {
+                            if (!confirm('Are you sure you want to delete this client?')) return;
+                            try {
+                              const res = await fetch(`/api/clients?id=${client.id}`, { method: 'DELETE' });
+                              if (!res.ok) throw new Error('Failed to delete');
+                              toast.success('Client deleted successfully');
+                              fetchClients();
+                            } catch (error) {
+                              console.error('Error deleting client:', error);
+                              toast.error('Failed to delete client');
+                            }
+                          }}
+                          className="text-sm text-red-600 hover:text-red-700 font-medium"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
