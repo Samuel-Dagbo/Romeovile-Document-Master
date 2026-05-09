@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Search, MapPin, Phone, Mail, FileText } from "lucide-react";
+import { Search, MapPin } from "lucide-react";
 import Link from "next/link";
 
 export default function LocationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [clients, setClients] = useState<{id: string; full_name: string; location: string; file_number: string}[]>([]);
+  const [clients, setClients] = useState<{id: string; full_name: string; location: string; file_number: string; plot_number: string}[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export default function LocationsPage() {
 
   const fetchClients = async () => {
     try {
-      const res = await fetch('/api/clients?order=location.asc');
+      const res = await fetch('/api/clients?limit=1000&order=full_name.asc');
       if (res.status === 401) {
         window.location.href = '/auth/login';
         return;
@@ -35,11 +35,12 @@ export default function LocationsPage() {
     (client) =>
       (client.full_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (client.location || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (client.file_number || '').toLowerCase().includes(searchQuery.toLowerCase())
+      (client.file_number || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (client.plot_number || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const clientsByLocation = filteredClients.reduce((acc, client) => {
-    const loc = client.location || 'Unknown';
+    const loc = client.location || client.plot_number || 'Unassigned';
     if (!acc[loc]) acc[loc] = [];
     acc[loc].push(client);
     return acc;
@@ -54,8 +55,8 @@ export default function LocationsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Locations</h1>
-        <p className="text-muted-foreground mt-1">View clients by their location</p>
+        <h1 className="text-2xl font-bold">Locations & Plots</h1>
+        <p className="text-muted-foreground mt-1">View clients by location or plot</p>
       </div>
 
       <div className="relative">
@@ -80,7 +81,7 @@ export default function LocationsPage() {
               key={location.name}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
+              transition={{ delay: index * 0.03 }}
               className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6"
             >
               <div className="flex items-center gap-3 mb-4">
@@ -94,7 +95,7 @@ export default function LocationsPage() {
               </div>
 
               <div className="space-y-2">
-                {location.clients.slice(0, 3).map((client) => (
+                {location.clients.slice(0, 5).map((client) => (
                   <Link
                     key={client.id}
                     href={`/dashboard/clients/${client.id}`}
@@ -109,9 +110,9 @@ export default function LocationsPage() {
                     <span className="text-xs text-slate-400">{client.file_number}</span>
                   </Link>
                 ))}
-                {location.clients.length > 3 && (
+                {location.clients.length > 5 && (
                   <p className="text-xs text-slate-500 text-center pt-2">
-                    +{location.clients.length - 3} more
+                    +{location.clients.length - 5} more
                   </p>
                 )}
               </div>

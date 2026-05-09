@@ -41,7 +41,7 @@ export default function IndenturesPage() {
 
   const fetchClients = async () => {
     try {
-      const res = await fetch('/api/clients');
+      const res = await fetch('/api/clients?limit=500');
       if (!res.ok) {
         if (res.status === 401) {
           window.location.href = '/auth/login';
