@@ -538,6 +538,122 @@ export default function ClientsPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Indenture Details */}
+                <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                    Indenture Details
+                  </label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">Number of Indentures</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={newClient.number_of_indentures}
+                        onChange={(e) => setNewClient({ ...newClient, number_of_indentures: parseInt(e.target.value) || 1 })}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">Signup Date</label>
+                      <input
+                        type="date"
+                        value={newClient.signup_date}
+                        onChange={(e) => setNewClient({ ...newClient, signup_date: e.target.value })}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">Indenture Status</label>
+                      <select
+                        value={newClient.indenture_done ? "true" : "false"}
+                        onChange={(e) => setNewClient({ ...newClient, indenture_done: e.target.value === "true" })}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                      >
+                        <option value="false">Pending</option>
+                        <option value="true">Complete</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">Indenture Date</label>
+                      <input
+                        type="date"
+                        value={newClient.indenture_date}
+                        onChange={(e) => setNewClient({ ...newClient, indenture_date: e.target.value })}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">Deponent Name</label>
+                      <input
+                        type="text"
+                        value={newClient.deponent_name}
+                        onChange={(e) => setNewClient({ ...newClient, deponent_name: e.target.value })}
+                        placeholder="Enter deponent name"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">Client Witness Name</label>
+                      <input
+                        type="text"
+                        value={newClient.client_witness_name}
+                        onChange={(e) => setNewClient({ ...newClient, client_witness_name: e.target.value })}
+                        placeholder="Enter witness name"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">Client Signed</label>
+                      <select
+                        value={newClient.indenture_signed ? "true" : "false"}
+                        onChange={(e) => setNewClient({ ...newClient, indenture_signed: e.target.value === "true" })}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                      >
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">Deponent Signed</label>
+                      <select
+                        value={newClient.deponent_signed ? "true" : "false"}
+                        onChange={(e) => setNewClient({ ...newClient, deponent_signed: e.target.value === "true" })}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                      >
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">Boss Signed</label>
+                      <select
+                        value={newClient.boss_signed ? "true" : "false"}
+                        onChange={(e) => setNewClient({ ...newClient, boss_signed: e.target.value === "true" })}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                      >
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">Court Signed</label>
+                      <select
+                        value={newClient.court_signed ? "true" : "false"}
+                        onChange={(e) => setNewClient({ ...newClient, court_signed: e.target.value === "true" })}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                      >
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-end gap-3">
