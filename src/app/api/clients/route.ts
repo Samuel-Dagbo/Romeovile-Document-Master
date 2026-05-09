@@ -109,7 +109,11 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error('Error creating client:', error)
-      return NextResponse.json({ error: 'Failed to create client' }, { status: 500 })
+      return NextResponse.json({ 
+        error: 'Failed to create client', 
+        details: error.message,
+        hint: 'Make sure all database columns exist'
+      }, { status: 500 })
     }
 
     return NextResponse.json(data, { status: 201 })
@@ -158,7 +162,11 @@ export async function PATCH(request: Request) {
 
     if (error) {
       console.error('Error updating client:', error)
-      return NextResponse.json({ error: 'Failed to update client' }, { status: 500 })
+      return NextResponse.json({ 
+        error: 'Failed to update client', 
+        details: error.message,
+        hint: 'Make sure all database columns exist'
+      }, { status: 500 })
     }
 
     return NextResponse.json(data)

@@ -162,7 +162,7 @@ export default function ClientProfilePage() {
       const data = await res.json();
       if (!res.ok) {
         console.error('Save error:', data);
-        throw new Error(data.error || 'Failed to save');
+        throw new Error(data.error + (data.details ? ` (${data.details})` : '') || 'Failed to save');
       }
       
       setIsEditing(false);
