@@ -21,79 +21,33 @@ const adminClient = createClient(supabaseUrl, serviceRoleKey, {
   },
 })
 
-async function setupAdmin() {
-  console.log('Setting up admin user...')
+async function setupDatabase() {
+  console.log('🔧 Setting up database schema...\n')
 
-  const { data: existingAuth, error: listError } = await adminClient.auth.admin.listUsers()
-  if (listError) {
-    console.error('Error listing users:', listError)
-    return
+  // Check users table
+  console.log('Checking users table...')
+  try {
+    const { data, error } = await adminClient.from('users').select('id').limit(1)
+    if (error) throw error
+    console.log('  ✓ Users table exists')
+  } catch (e) {
+    console.log('  ⚠ Users table may need to be created manually')
   }
 
-  const adminAuthUser = existingAuth?.users.find(u => u.email === 'admin@romeoville.com')
-
-  if (adminAuthUser) {
-    console.log('Admin user already exists in Auth:', adminAuthUser.id)
-    
-    const { data: existingProfile } = await adminClient
-      .from('users')
-      .select('*')
-      .eq('id', adminAuthUser.id)
-      .single()
-
-    if (existingProfile) {
-      console.log('Admin profile already exists')
-      return
-    }
-
-    const { error: profileError } = await adminClient
-      .from('users')
-      .insert({
-        id: adminAuthUser.id,
-        email: 'admin@romeoville.com',
-        full_name: 'System Admin',
-        role: 'admin',
-        approved: true,
-      })
-
-    if (profileError) {
-      console.error('Error creating profile:', profileError)
-    } else {
-      console.log('Admin profile created successfully')
-    }
-    return
+  // Check clients table
+  console.log('Checking clients table...')
+  try {
+    const { data, error } = await adminClient.from('clients').select('id').limit(1)
+    if (error) throw error
+    console.log('  ✓ Clients table exists')
+  } catch (e) {
+    console.log('  ⚠ Clients table may need to be created manually')
   }
 
-  const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
-    email: 'admin@romeoville.com',
-    password: 'admin123',
-    email_confirm: true,
-  })
-
-  if (authError) {
-    console.error('Error creating auth user:', authError)
-    return
-  }
-
-  console.log('Auth user created:', authData.user?.id)
-
-  const { error: profileError } = await adminClient
-    .from('users')
-    .insert({
-      id: authData.user?.id,
-      email: 'admin@romeoville.com',
-      full_name: 'System Admin',
-      role: 'admin',
-      approved: true,
-    })
-
-  if (profileError) {
-    console.error('Error creating profile:', profileError)
-  } else {
-    console.log('Admin profile created successfully')
-  }
+  console.log('\n✅ Database schema check complete!')
+  console.log('\n📋 Run the SQL in src/scripts/schema.sql in your Supabase SQL Editor to create/verify tables.')
 }
 
-setupAdmin()
-  .then(() => console.log('Setup complete'))
+setupDatabase()
+  .then(() => console.log('\n✨ Setup check complete!'))
   .catch(console.error)

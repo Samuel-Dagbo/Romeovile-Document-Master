@@ -63,6 +63,16 @@ export default function ClientsPage() {
     plot_size: "",
     site_plan: false,
     site_plan_signed: false,
+    signup_date: new Date().toISOString().split('T')[0],
+    number_of_indentures: 1,
+    indenture_done: false,
+    indenture_date: "",
+    indenture_signed: false,
+    deponent_signed: false,
+    deponent_name: "",
+    client_witness_name: "",
+    boss_signed: false,
+    court_signed: false,
   });
 
   const searchResults = searchQuery.length > 0 
@@ -553,15 +563,25 @@ export default function ClientsPage() {
                           phone: newClient.phone,
                           email: newClient.email,
                           address: newClient.address,
+                          location: newClient.location || null,
                           file_number: `RV-${Date.now().toString().slice(-6)}`,
                           total_amount: parseFloat(newClient.total_amount) || 0,
                           balance: parseFloat(newClient.total_amount) || 0,
                           status: 'active',
-                          signup_date: new Date().toISOString().split('T')[0],
+                          signup_date: newClient.signup_date || null,
                           plot_number: newClient.plot_number || null,
                           plot_size: newClient.plot_size ? parseFloat(newClient.plot_size) : null,
                           site_plan_done: newClient.site_plan,
-                          site_plan_signed: newClient.site_plan_signed
+                          site_plan_signed: newClient.site_plan_signed,
+                          number_of_indentures: newClient.number_of_indentures || 1,
+                          indenture_done: newClient.indenture_done || false,
+                          indenture_date: newClient.indenture_date || null,
+                          indenture_signed: newClient.indenture_signed || false,
+                          deponent_signed: newClient.deponent_signed || false,
+                          deponent_name: newClient.deponent_name || null,
+                          client_witness_name: newClient.client_witness_name || null,
+                          boss_signed: newClient.boss_signed || false,
+                          court_signed: newClient.court_signed || false,
                         })
                       });
                       
@@ -569,7 +589,28 @@ export default function ClientsPage() {
                       
                       toast.success("Client created successfully!");
                       setShowAddModal(false);
-                      setNewClient({ full_name: "", phone: "", email: "", address: "", location: "", total_amount: "", plot_number: "", plot_size: "", site_plan: false, site_plan_signed: false });
+                      setNewClient({ 
+                          full_name: "", 
+                          phone: "", 
+                          email: "", 
+                          address: "", 
+                          location: "", 
+                          total_amount: "", 
+                          plot_number: "", 
+                          plot_size: "", 
+                          site_plan: false, 
+                          site_plan_signed: false,
+                          signup_date: new Date().toISOString().split('T')[0],
+                          number_of_indentures: 1,
+                          indenture_done: false,
+                          indenture_date: "",
+                          indenture_signed: false,
+                          deponent_signed: false,
+                          deponent_name: "",
+                          client_witness_name: "",
+                          boss_signed: false,
+                          court_signed: false,
+                        });
                       fetchClients();
                     } catch (error) {
                       console.error('Error creating client:', error);
