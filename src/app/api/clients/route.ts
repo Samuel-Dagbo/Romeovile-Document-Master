@@ -4,16 +4,25 @@ import { getUserFromCookie } from '@/lib/auth'
 import { z } from 'zod'
 
 const clientSchema = z.object({
-  full_name: z.string().min(1, 'Full name is required'),
+  full_name: z.string().min(1, 'Full name is required').optional(),
   phone: z.string().optional(),
   email: z.string().email('Invalid email').optional().or(z.literal('')),
   address: z.string().optional(),
   location: z.string().optional(),
   total_amount: z.number().min(0).optional().or(z.string().transform(val => Number(val) || 0)),
   plot_number: z.string().optional(),
-  plot_size: z.string().optional(),
+  plot_size: z.number().optional().or(z.string().transform(val => Number(val) || null)),
+  plot_location: z.string().optional(),
   site_plan: z.boolean().optional(),
+  site_plan_done: z.boolean().optional(),
   site_plan_signed: z.boolean().optional(),
+  number_of_indentures: z.number().optional().or(z.string().transform(val => Number(val) || null)),
+  indenture_done: z.boolean().optional(),
+  indenture_date: z.string().optional().nullable(),
+  indenture_signed: z.boolean().optional(),
+  deponent_signed: z.boolean().optional(),
+  boss_signed: z.boolean().optional(),
+  court_signed: z.boolean().optional(),
 })
 
 export async function GET(request: Request) {
