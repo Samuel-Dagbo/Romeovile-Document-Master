@@ -72,6 +72,8 @@ export default function ClientProfilePage() {
     indenture_date: '',
     indenture_signed: false,
     deponent_signed: false,
+    deponent_name: '',
+    client_witness_name: '',
     boss_signed: false,
     court_signed: false
   });
@@ -116,6 +118,8 @@ export default function ClientProfilePage() {
           indenture_date: client.indenture_date || '',
           indenture_signed: client.indenture_signed || false,
           deponent_signed: client.deponent_signed || false,
+          deponent_name: client.deponent_name || '',
+          client_witness_name: client.client_witness_name || '',
           boss_signed: client.boss_signed || false,
           court_signed: client.court_signed || false
         });
@@ -137,6 +141,7 @@ export default function ClientProfilePage() {
           phone: editData.phone,
           email: editData.email,
           address: editData.address,
+          signup_date: editData.signup_date || null,
           plot_number: editData.plot_number,
           plot_size: editData.plot_size ? parseFloat(editData.plot_size) : null,
           plot_location: editData.plot_location,
@@ -147,6 +152,8 @@ export default function ClientProfilePage() {
           indenture_date: editData.indenture_date || null,
           indenture_signed: editData.indenture_signed,
           deponent_signed: editData.deponent_signed,
+          deponent_name: editData.deponent_name || null,
+          client_witness_name: editData.client_witness_name || null,
           boss_signed: editData.boss_signed,
           court_signed: editData.court_signed
         })
@@ -402,13 +409,21 @@ export default function ClientProfilePage() {
         badgeColor={editData.indenture_done ? "emerald" : "amber"}
       >
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="space-y-2">
               <label className="text-xs font-medium text-slate-500 uppercase">Number of Indentures</label>
               {isEditing ? (
                 <input type="number" min="1" value={editData.number_of_indentures} onChange={(e) => setEditData({ ...editData, number_of_indentures: parseInt(e.target.value) || 1 })} className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800" />
               ) : (
                 <p className="text-lg font-semibold text-slate-900 dark:text-white">{editData.number_of_indentures || 1}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-slate-500 uppercase">Signup Date</label>
+              {isEditing ? (
+                <input type="date" value={editData.signup_date} onChange={(e) => setEditData({ ...editData, signup_date: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800" />
+              ) : (
+                <p className="text-lg font-semibold text-slate-900 dark:text-white">{editData.signup_date || '-'}</p>
               )}
             </div>
             <div className="space-y-2">
@@ -433,11 +448,33 @@ export default function ClientProfilePage() {
               )}
             </div>
           </div>
+
+          <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
+            <h4 className="font-semibold text-slate-900 dark:text-white mb-4">Witness Names</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-slate-500 uppercase">Deponent Name</label>
+                {isEditing ? (
+                  <input type="text" value={editData.deponent_name} onChange={(e) => setEditData({ ...editData, deponent_name: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800" placeholder="Enter deponent name" />
+                ) : (
+                  <p className="text-lg font-semibold text-slate-900 dark:text-white">{editData.deponent_name || '-'}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-slate-500 uppercase">Client Witness Name</label>
+                {isEditing ? (
+                  <input type="text" value={editData.client_witness_name} onChange={(e) => setEditData({ ...editData, client_witness_name: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800" placeholder="Enter witness name" />
+                ) : (
+                  <p className="text-lg font-semibold text-slate-900 dark:text-white">{editData.client_witness_name || '-'}</p>
+                )}
+              </div>
+            </div>
+          </div>
           
           <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
             <h4 className="font-semibold text-slate-900 dark:text-white mb-4">Signature Status</h4>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <SignatureBox label="Indenture" checked={editData.indenture_signed} isEditing={isEditing} onChange={(v) => setEditData({ ...editData, indenture_signed: v })} />
+              <SignatureBox label="Client Signed" checked={editData.indenture_signed} isEditing={isEditing} onChange={(v) => setEditData({ ...editData, indenture_signed: v })} />
               <SignatureBox label="Deponent" checked={editData.deponent_signed} isEditing={isEditing} onChange={(v) => setEditData({ ...editData, deponent_signed: v })} />
               <SignatureBox label="Boss" checked={editData.boss_signed} isEditing={isEditing} onChange={(v) => setEditData({ ...editData, boss_signed: v })} />
               <SignatureBox label="Court" checked={editData.court_signed} isEditing={isEditing} onChange={(v) => setEditData({ ...editData, court_signed: v })} />

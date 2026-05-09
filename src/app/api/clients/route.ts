@@ -25,6 +25,8 @@ const clientSchema = z.object({
   indenture_date: z.string().optional().nullable(),
   indenture_signed: z.boolean().optional(),
   deponent_signed: z.boolean().optional(),
+  deponent_name: z.string().optional(),
+  client_witness_name: z.string().optional(),
   boss_signed: z.boolean().optional(),
   court_signed: z.boolean().optional(),
 })
