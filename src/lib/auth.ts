@@ -1,4 +1,4 @@
-import { getSupabaseServerClient } from './supabase-server'
+import { getSupabaseServerClient, getSupabaseAdminClient } from './supabase-server'
 import { cookies } from 'next/headers'
 import crypto from 'crypto'
 
@@ -26,7 +26,7 @@ export async function getUserFromCookie(): Promise<User | null> {
 }
 
 export async function authenticateUser(email: string, password: string): Promise<User | null> {
-  const supabase = getSupabaseServerClient()
+  const supabase = getSupabaseAdminClient()
   
   const { data: user, error } = await supabase
     .from('users')
@@ -52,7 +52,7 @@ export async function authenticateUser(email: string, password: string): Promise
 }
 
 export async function createUser(email: string, password: string, fullName: string): Promise<User> {
-  const supabase = getSupabaseServerClient()
+  const supabase = getSupabaseAdminClient()
   
   const passwordHash = crypto.createHash('sha256').update(password).digest('hex')
   

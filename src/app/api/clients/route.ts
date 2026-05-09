@@ -4,31 +4,31 @@ import { getUserFromCookie } from '@/lib/auth'
 import { z } from 'zod'
 
 const clientSchema = z.object({
-  full_name: z.string().min(1, 'Full name is required').optional(),
-  phone: z.string().optional(),
-  email: z.string().email('Invalid email').optional().or(z.literal('')),
-  address: z.string().optional(),
-  location: z.string().optional(),
-  total_amount: z.number().min(0).optional().or(z.string().transform(val => Number(val) || 0)),
-  balance: z.number().min(0).optional().or(z.string().transform(val => Number(val) || 0)),
-  file_number: z.string().optional(),
-  status: z.string().optional(),
-  signup_date: z.string().optional(),
-  plot_number: z.string().optional(),
-  plot_size: z.number().optional().or(z.string().transform(val => Number(val) || null)),
-  plot_location: z.string().optional(),
-  site_plan: z.boolean().optional(),
-  site_plan_done: z.boolean().optional(),
-  site_plan_signed: z.boolean().optional(),
-  number_of_indentures: z.number().optional().or(z.string().transform(val => Number(val) || null)),
-  indenture_done: z.boolean().optional(),
-  indenture_date: z.string().optional().nullable(),
-  indenture_signed: z.boolean().optional(),
-  deponent_signed: z.boolean().optional(),
-  deponent_name: z.string().optional(),
-  client_witness_name: z.string().optional(),
-  boss_signed: z.boolean().optional(),
-  court_signed: z.boolean().optional(),
+  full_name: z.any().optional(),
+  phone: z.any().optional(),
+  email: z.any().optional(),
+  address: z.any().optional(),
+  location: z.any().optional(),
+  total_amount: z.any().optional(),
+  balance: z.any().optional(),
+  file_number: z.any().optional(),
+  status: z.any().optional(),
+  signup_date: z.any().optional(),
+  plot_number: z.any().optional(),
+  plot_size: z.any().optional(),
+  plot_location: z.any().optional(),
+  site_plan: z.any().optional(),
+  site_plan_done: z.any().optional(),
+  site_plan_signed: z.any().optional(),
+  number_of_indentures: z.any().optional(),
+  indenture_done: z.any().optional(),
+  indenture_date: z.any().optional(),
+  indenture_signed: z.any().optional(),
+  deponent_signed: z.any().optional(),
+  deponent_name: z.any().optional(),
+  client_witness_name: z.any().optional(),
+  boss_signed: z.any().optional(),
+  court_signed: z.any().optional(),
 })
 
 export async function GET(request: Request) {
@@ -95,9 +95,10 @@ export async function POST(request: Request) {
     const result = clientSchema.safeParse(body)
 
     if (!result.success) {
+      const validationErrors = result.error.errors.map(e => `${e.path.join('.')}: ${e.message}`)
       return NextResponse.json({
         error: 'Validation error',
-        details: result.error.errors
+        details: validationErrors.join('; ')
       }, { status: 400 })
     }
 
@@ -147,9 +148,10 @@ export async function PATCH(request: Request) {
     const result = clientSchema.partial().safeParse(body)
 
     if (!result.success) {
+      const validationErrors = result.error.errors.map(e => `${e.path.join('.')}: ${e.message}`)
       return NextResponse.json({
         error: 'Validation error',
-        details: result.error.errors
+        details: validationErrors.join('; ')
       }, { status: 400 })
     }
 
