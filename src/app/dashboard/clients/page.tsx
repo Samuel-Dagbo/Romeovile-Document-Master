@@ -35,7 +35,13 @@ export default function ClientsPage() {
   const fetchClients = async () => {
     try {
       const res = await fetch('/api/clients?order=created_at.desc');
-      if (!res.ok) throw new Error('Failed to fetch');
+      if (!res.ok) {
+        if (res.status === 401) {
+          window.location.href = '/auth/login';
+          return;
+        }
+        throw new Error('Failed to fetch');
+      }
       const data = await res.json();
       setClients(Array.isArray(data) ? data : []);
     } catch (error) {

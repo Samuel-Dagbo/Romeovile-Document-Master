@@ -33,10 +33,18 @@ export default function UsersPage() {
       const res = await fetch(`${API_URL}/rest/v1/users?select=*`, {
         headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
       });
+      if (res.status === 401) {
+        window.location.href = '/auth/login';
+        return;
+      }
+      if (!res.ok) {
+        throw new Error('Failed to fetch users');
+      }
       const data = await res.json();
-      setUsers(data || []);
+      setUsers(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching users:', error);
+      toast.error("Failed to load users");
     } finally {
       setLoading(false);
     }

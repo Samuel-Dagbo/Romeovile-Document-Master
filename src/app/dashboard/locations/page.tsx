@@ -34,11 +34,16 @@ export default function LocationsPage() {
       const res = await fetch(`${API_URL}/rest/v1/locations?select=*&order=name.asc`, {
         headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
       });
+      if (res.status === 401) {
+        window.location.href = '/auth/login';
+        return;
+      }
       if (!res.ok) throw new Error('Failed to fetch');
       const data = await res.json();
       setLocations(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching locations:', error);
+      toast.error("Failed to load locations");
     } finally {
       setLoading(false);
     }

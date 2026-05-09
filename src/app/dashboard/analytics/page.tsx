@@ -58,6 +58,13 @@ export default function AnalyticsPage() {
   const fetchData = async () => {
     try {
       const res = await fetch('/api/clients');
+      if (!res.ok) {
+        if (res.status === 401) {
+          window.location.href = '/auth/login';
+          return;
+        }
+        throw new Error('Failed to fetch');
+      }
       const data = await res.json();
       const clientList = Array.isArray(data) ? data : [];
       setClients(clientList);
@@ -79,10 +86,15 @@ export default function AnalyticsPage() {
     }
   };
 
+  const activeClients = clients.filter(c => c.status === 'active').length;
+  const inactiveClients = clients.filter(c => c.status !== 'active').length;
+  
   const clientStatusData = [
-    { name: "Active", value: clients.filter(c => c.status === 'active').length, color: "#10b981" },
-    { name: "Inactive", value: clients.filter(c => c.status !== 'active').length, color: "#64748b" },
+    { name: "Active", value: activeClients, color: "#10b981" },
+    { name: "Inactive", value: inactiveClients, color: "#64748b" },
   ];
+
+  const hasClientData = clients.length > 0;
 
   const locationPerformance = clients.reduce((acc: any[], client: any) => {
     const loc = client.location || 'Other';
@@ -174,40 +186,54 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card-premium p-6">
           <h2 className="text-lg font-semibold mb-6">Client Status Distribution</h2>
-          <div className="flex items-center justify-center">
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie data={clientStatusData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
-                  {clientStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex justify-center gap-6 mt-4">
-            {clientStatusData.map((item) => (
-              <div key={item.name} className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                <span className="text-sm text-muted-foreground">{item.name}</span>
-                <span className="text-sm font-medium">{item.value}</span>
+          {hasClientData ? (
+            <>
+              <div className="flex items-center justify-center">
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie data={clientStatusData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
+                      {clientStatusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-            ))}
-          </div>
+              <div className="flex justify-center gap-6 mt-4">
+                {clientStatusData.map((item) => (
+                  <div key={item.name} className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                    <span className="text-sm text-muted-foreground">{item.name}</span>
+                    <span className="text-sm font-medium">{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-[250px] text-muted-foreground">
+              No client data available
+            </div>
+          )}
         </div>
 
         <div className="card-premium p-6">
           <h2 className="text-lg font-semibold mb-6">Client Status</h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <RechartsBarChart data={clientStatusData}>
+          {hasClientData ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <RechartsBarChart data={clientStatusData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} />
               <YAxis stroke="#94a3b8" fontSize={12} />
               <Tooltip contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
               <Bar dataKey="value" fill="#3b82f6" radius={[6, 6, 0, 0]} />
-            </RechartsBarChart>
-          </ResponsiveContainer>
+              </RechartsBarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[250px] text-muted-foreground">
+              No client data available
+            </div>
+          )}
         </div>
       </div>
 

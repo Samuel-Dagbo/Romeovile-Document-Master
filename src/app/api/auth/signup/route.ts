@@ -1,46 +1,38 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createUser } from '@/lib/auth'
+import { z } from 'zod'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-const supabaseAdmin = createClient(supabaseUrl, serviceKey)
+const signupSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
+  full_name: z.string().min(2, 'Full name is required'),
+})
 
 export async function POST(request: Request) {
   try {
-    const { email, password, full_name } = await request.json()
-
-    if (!email || !password || !full_name) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    const body = await request.json()
+    const result = signupSchema.safeParse(body)
+    
+    if (!result.success) {
+      return NextResponse.json({
+        error: 'Validation error',
+        details: result.error.errors
+      }, { status: 400 })
     }
 
-    const { data: existing } = await supabaseAdmin
-      .from('users')
-      .select('id')
-      .eq('email', email)
-      .single()
+    const { email, password, full_name } = result.data
 
-    if (existing) {
-      return NextResponse.json({ error: 'Email already registered' }, { status: 400 })
+    try {
+      const user = await createUser(email, password, full_name)
+      return NextResponse.json({
+        user,
+        message: 'Account created successfully. Pending admin approval.',
+      }, { status: 201 })
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
     }
-
-    const { data, error } = await supabaseAdmin
-      .from('users')
-      .insert({
-        email,
-        password,
-        full_name,
-        role: 'pending',
-        approved: false
-      })
-      .select()
-      .single()
-
-    if (error) throw error
-
-    return NextResponse.json(data, { status: 201 })
   } catch (error: any) {
     console.error('Signup error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

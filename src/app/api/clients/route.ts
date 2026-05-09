@@ -1,56 +1,106 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdminClient } from '@/lib/supabase-server'
+import { getUserFromCookie } from '@/lib/auth'
+import { z } from 'zod'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-const supabaseAdmin = createClient(supabaseUrl, serviceKey)
+const clientSchema = z.object({
+  full_name: z.string().min(1, 'Full name is required'),
+  phone: z.string().optional(),
+  email: z.string().email('Invalid email').optional().or(z.literal('')),
+  address: z.string().optional(),
+  location: z.string().optional(),
+  total_amount: z.number().min(0).optional().or(z.string().transform(val => Number(val) || 0)),
+  plot_number: z.string().optional(),
+  plot_size: z.string().optional(),
+  site_plan: z.boolean().optional(),
+  site_plan_signed: z.boolean().optional(),
+})
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const limit = searchParams.get('limit') || '100'
-    const order = searchParams.get('order') || 'created_at.desc'
+    const limit = parseInt(searchParams.get('limit') || '100', 10)
+    const orderParam = searchParams.get('order') || 'created_at.desc'
     const id = searchParams.get('id')
 
-    let query = supabaseAdmin
+    const supabase = getSupabaseAdminClient()
+
+    const user = await getUserFromCookie()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (!user.approved) {
+      return NextResponse.json({ error: 'Account not approved' }, { status: 403 })
+    }
+
+    // Parse order parameter (e.g., "created_at.desc" -> { column: "created_at", ascending: false })
+    const [orderColumn, sortOrder] = orderParam.split('.')
+    const ascending = sortOrder !== 'desc'
+
+    let query = supabase
       .from('clients')
       .select('*')
-      .order('created_at', { ascending: order === 'created_at.asc' })
+      .order(orderColumn || 'created_at', { ascending })
 
     if (id) {
       query = query.eq('id', id)
     } else {
-      query = query.limit(parseInt(limit))
+      query = query.limit(limit)
     }
 
     const { data, error } = await query
 
-    if (error) throw error
+    if (error) {
+      console.error('Error fetching clients:', error)
+      return NextResponse.json({ error: 'Failed to fetch clients' }, { status: 500 })
+    }
 
     return NextResponse.json(data || [])
   } catch (error: any) {
-    console.error('Error fetching clients:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Error in clients GET:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
+    const supabase = getSupabaseAdminClient()
 
-    const { data, error } = await supabaseAdmin
+    const user = await getUserFromCookie()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (!user.approved) {
+      return NextResponse.json({ error: 'Account not approved' }, { status: 403 })
+    }
+
+    const body = await request.json()
+    const result = clientSchema.safeParse(body)
+
+    if (!result.success) {
+      return NextResponse.json({
+        error: 'Validation error',
+        details: result.error.errors
+      }, { status: 400 })
+    }
+
+    const { data, error } = await supabase
       .from('clients')
-      .insert(body)
+      .insert(result.data)
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Error creating client:', error)
+      return NextResponse.json({ error: 'Failed to create client' }, { status: 500 })
+    }
 
     return NextResponse.json(data, { status: 201 })
   } catch (error: any) {
-    console.error('Error creating client:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Error in clients POST:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -63,21 +113,43 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Client ID required' }, { status: 400 })
     }
 
-    const body = await request.json()
+    const supabase = getSupabaseAdminClient()
 
-    const { data, error } = await supabaseAdmin
+    const user = await getUserFromCookie()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (!user.approved) {
+      return NextResponse.json({ error: 'Account not approved' }, { status: 403 })
+    }
+
+    const body = await request.json()
+    const result = clientSchema.partial().safeParse(body)
+
+    if (!result.success) {
+      return NextResponse.json({
+        error: 'Validation error',
+        details: result.error.errors
+      }, { status: 400 })
+    }
+
+    const { data, error } = await supabase
       .from('clients')
-      .update(body)
+      .update(result.data)
       .eq('id', id)
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Error updating client:', error)
+      return NextResponse.json({ error: 'Failed to update client' }, { status: 500 })
+    }
 
     return NextResponse.json(data)
   } catch (error: any) {
-    console.error('Error updating client:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Error in clients PATCH:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -90,16 +162,30 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Client ID required' }, { status: 400 })
     }
 
-    const { error } = await supabaseAdmin
+    const supabase = getSupabaseAdminClient()
+
+    const user = await getUserFromCookie()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (!user.approved) {
+      return NextResponse.json({ error: 'Account not approved' }, { status: 403 })
+    }
+
+    const { error } = await supabase
       .from('clients')
       .delete()
       .eq('id', id)
 
-    if (error) throw error
+    if (error) {
+      console.error('Error deleting client:', error)
+      return NextResponse.json({ error: 'Failed to delete client' }, { status: 500 })
+    }
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('Error deleting client:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Error in clients DELETE:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

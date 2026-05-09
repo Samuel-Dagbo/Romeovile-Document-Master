@@ -2,12 +2,13 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 
 interface User {
   id: string;
   email: string;
-  full_name: string;
-  role: string;
+  full_name: string | null;
+  role: string | null;
   approved: boolean;
 }
 
@@ -15,7 +16,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -26,56 +27,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    // Check localStorage and cookie on mount
-    const stored = localStorage.getItem('user');
-    const cookie = document.cookie.split('; ').find(c => c.startsWith('user='));
-    
-    if (stored) {
-      setUser(JSON.parse(stored));
+    const storedUser = localStorage.getItem('user')
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser))
+      } catch (e) {
+        localStorage.removeItem('user')
+      }
     }
-    setLoading(false);
-  }, []);
+    setLoading(false)
+  }, [])
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      
-      if (!res.ok) return false;
-      
-      const userData = await res.json();
-      
-      // Store in localStorage
-      localStorage.setItem('user', JSON.stringify(userData));
-      
-      // Set cookie for middleware (correct format)
-      document.cookie = `user=${encodeURIComponent(JSON.stringify(userData))}; path=/; max-age=86400; SameSite=Lax`;
-      
-      setUser(userData);
-      return true;
-    } catch {
-      return false;
-    }
-  };
+        body: JSON.stringify({ email, password }),
+      })
 
-  const logout = () => {
-    localStorage.removeItem('user');
-    document.cookie = 'user=; path=/; max-age=0';
-    setUser(null);
-  };
+      const data = await res.json()
+
+      if (!res.ok) {
+        if (data.error === 'Account pending approval') {
+          router.push('/pending')
+        }
+        return false
+      }
+
+      localStorage.setItem('user', JSON.stringify(data.user))
+      setUser(data.user)
+      return true
+    } catch (error) {
+      console.error('Login error:', error)
+      return false
+    }
+  }
+
+  const logout = async () => {
+    localStorage.removeItem('user')
+    setUser(null)
+    router.push('/auth/login')
+  }
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
-  );
+  )
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
-  return context;
+  const context = useContext(AuthContext)
+  if (!context) throw new Error('useAuth must be used within AuthProvider')
+  return context
 }

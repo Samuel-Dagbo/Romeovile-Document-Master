@@ -39,6 +39,14 @@ export default function DashboardPage() {
         fetch('/api/clients?limit=1000')
       ]);
 
+      if (!recentRes.ok || !allRes.ok) {
+        if (recentRes.status === 401 || allRes.status === 401) {
+          window.location.href = '/auth/login';
+          return;
+        }
+        throw new Error('Failed to fetch');
+      }
+
       const recentData = await recentRes.json();
       const allClients = await allRes.json();
 

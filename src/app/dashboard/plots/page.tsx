@@ -36,6 +36,13 @@ export default function PlotsPage() {
   const fetchClients = async () => {
     try {
       const res = await fetch('/api/clients');
+      if (!res.ok) {
+        if (res.status === 401) {
+          window.location.href = '/auth/login';
+          return;
+        }
+        throw new Error('Failed to fetch');
+      }
       const data = await res.json();
       const clientsWithPlots = (Array.isArray(data) ? data : []).filter((c: Client) => c.plot_number);
       setClients(clientsWithPlots);
