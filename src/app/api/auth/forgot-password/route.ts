@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import Mailjet from 'node-mailjet'
-import { getSupabaseServerClient } from '@/lib/supabase-server'
+import { getSupabaseAdminClient } from '@/lib/supabase-server'
+import crypto from 'crypto'
 
 const requestCodeSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -20,7 +21,7 @@ function generateCode(): string {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const supabase = getSupabaseServerClient()
+    const supabase = getSupabaseAdminClient()
 
     if (body.action === 'request') {
       const result = requestCodeSchema.safeParse(body)
@@ -152,17 +153,12 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Reset code has expired. Please request a new one.' }, { status: 400 })
       }
 
-      const { data: authUser, error: authError } = await supabase.auth.admin.listUsers()
-      const authUserData = authUser?.users.find(u => u.email === email)
+      const passwordHash = crypto.createHash('sha256').update(newPassword).digest('hex')
       
-      if (authError || !authUserData) {
-        console.error('Auth user not found:', authError)
-        return NextResponse.json({ error: 'User authentication error' }, { status: 500 })
-      }
-
-      const { error: updateError } = await supabase.auth.admin.updateUserById(authUserData.id, {
-        password: newPassword
-      })
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ password: passwordHash })
+        .eq('id', user.id)
 
       if (updateError) {
         console.error('Password update error:', updateError)
