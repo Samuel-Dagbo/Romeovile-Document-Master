@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Mail, Lock, CheckCircle, Menu, X, Moon, Sun, KeyRound } from "lucide-react";
+import { ArrowLeft, Mail, Lock, CheckCircle, Menu, X, Moon, Sun, KeyRound, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTheme } from "next-themes";
 
@@ -16,6 +16,8 @@ export default function ForgotPasswordPage() {
   const [step, setStep] = useState<'request' | 'codeSent' | 'verify'>('request');
   const [isSuccess, setIsSuccess] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { theme, setTheme } = useTheme();
 
   const handleRequestCode = async (e: React.FormEvent) => {
@@ -279,14 +281,21 @@ export default function ForgotPasswordPage() {
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border bg-white/50 dark:bg-slate-800/50 focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full pl-10 pr-12 py-3 rounded-xl border bg-white/50 dark:bg-slate-800/50 focus:ring-2 focus:ring-blue-500 outline-none"
                       placeholder="Min 8 characters"
                       minLength={8}
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
+                    </button>
                   </div>
                 </div>
 
@@ -295,14 +304,21 @@ export default function ForgotPasswordPage() {
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
-                      type="password"
+                      type={showConfirmPassword ? "text" : "password"}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border bg-white/50 dark:bg-slate-800/50 focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full pl-10 pr-12 py-3 rounded-xl border bg-white/50 dark:bg-slate-800/50 focus:ring-2 focus:ring-blue-500 outline-none"
                       placeholder="Confirm password"
                       minLength={8}
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2"
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
+                    </button>
                   </div>
                 </div>
 

@@ -152,7 +152,15 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Reset code has expired. Please request a new one.' }, { status: 400 })
       }
 
-      const { error: updateError } = await supabase.auth.admin.updateUserById(user.id, {
+      const { data: authUser, error: authError } = await supabase.auth.admin.listUsers()
+      const authUserData = authUser?.users.find(u => u.email === email)
+      
+      if (authError || !authUserData) {
+        console.error('Auth user not found:', authError)
+        return NextResponse.json({ error: 'User authentication error' }, { status: 500 })
+      }
+
+      const { error: updateError } = await supabase.auth.admin.updateUserById(authUserData.id, {
         password: newPassword
       })
 
